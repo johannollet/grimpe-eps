@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1b2320">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Grimpe EPS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<style>
+/* Mise en page : barre d'onglets collante + zone de travail ; cartes élèves en grille tactile, voies = prises colorées */
+:root{
+  --bg:#eef0ec; --surface:#fbfcfa; --surface2:#e3e7e1; --ink:#1b2320; --muted:#5c6862; --line:#cfd6cf;
+  --accent:#d9482b; --accent-ink:#fff; --ok:#2f8a4a; --warn:#b7791f; --bad:#b33a2f;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151a18; --surface:#1e2522; --surface2:#28312d; --ink:#e7ece8; --muted:#9aa7a0; --line:#34403a;
+  --accent:#f0643f; --accent-ink:#1a0d08; --ok:#58b874; --warn:#e0a64a; --bad:#e46a5d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151a18; --surface:#1e2522; --surface2:#28312d; --ink:#e7ece8; --muted:#9aa7a0; --line:#34403a;
+  --accent:#f0643f; --accent-ink:#1a0d08; --ok:#58b874; --warn:#e0a64a; --bad:#e46a5d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 0;border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:.5px;line-height:1;display:flex;align-items:center;gap:8px}
+.brand svg{width:28px;height:28px}
+.top select{margin-left:auto;min-width:0;max-width:60vw;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:700}
+nav{display:flex;gap:4px;overflow-x:auto;margin-top:10px}
+nav button{border:0;background:none;padding:10px 14px;font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+main{padding-top:18px}
+h2{font-family:var(--display);font-weight:700;font-size:24px;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:8px;font-weight:700}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:none}
+.btn.danger{color:var(--bad);border-color:var(--bad);background:none}
+.btn.sm{padding:5px 10px;font-size:13px}
+.notice{background:var(--surface2);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.notice b{font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:104px}
+.card:hover{border-color:var(--accent)}
+.card .nm{font-weight:700;line-height:1.2}
+.card .nm small{display:block;font-weight:400;color:var(--muted)}
+.card .st{display:flex;justify-content:space-between;align-items:end;margin-top:auto;font-variant-numeric:tabular-nums}
+.pts{font-family:var(--display);font-weight:800;font-size:26px;line-height:1}
+.pts small{font-size:13px;color:var(--muted);font-weight:600}
+.lvl{font-family:var(--display);font-weight:700;font-size:18px}
+.permis{display:flex;gap:4px}
+.pm{font-size:11px;font-weight:700;padding:2px 6px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.pm.on{background:var(--ok);border-color:var(--ok);color:#fff}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700}
+tr:last-child td{border-bottom:0}
+td.num{text-align:right}
+.rank{font-family:var(--display);font-weight:800;font-size:20px;width:40px}
+.hold{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.dot{width:18px;height:18px;border-radius:50% 46% 52% 44%;border:2px solid rgba(0,0,0,.25);flex:none}
+.voies{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.vbtn{border:2px solid transparent;border-radius:12px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:700}
+.vbtn .c{font-family:var(--display);font-size:22px;font-weight:800;line-height:1}
+.vbtn .n{font-size:12px;opacity:.85}
+.vbtn[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
+.vbtn.done{box-shadow:inset 0 0 0 3px rgba(255,255,255,.7)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:var(--surface);padding:9px 12px;font-weight:700;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.lab{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;margin:14px 0 6px}
+.overlay{position:fixed;inset:0;background:rgba(10,14,12,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center;padding:max(10px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px))}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px))}
+@media (min-width:760px){.overlay{align-items:center}.sheet{border-radius:16px;max-height:88vh}}
+.sheet h3{font-family:var(--display);font-size:26px;margin:0}
+.warn{color:var(--warn);font-weight:700;font-size:13px}
+.list{display:flex;flex-direction:column;gap:6px}
+.li{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.li .grow{flex:1;min-width:0}
+.tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--surface2)}
+.tag.ok{background:var(--ok);color:#fff}.tag.rp{background:var(--warn);color:#fff}.tag.ko{background:var(--bad);color:#fff}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.panel h3{font-family:var(--display);font-size:20px;margin:0}
+.panel p{margin:0;color:var(--muted);font-size:14px}
+code{font-size:13px;background:var(--surface2);padding:1px 5px;border-radius:4px}
+input[type=text],input[type=number],select.in{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:end}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:700}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:30;font-weight:700;max-width:90vw}
+.sw{width:42px;height:24px;border-radius:99px;border:0;background:var(--line);position:relative}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
+.sw[aria-checked="true"]{background:var(--ok)}
+.sw[aria-checked="true"]::after{left:21px}
+.empty{padding:30px 16px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:var(--r)}
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.podium div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;text-align:center}
+.podium .p{font-family:var(--display);font-weight:800;font-size:30px;color:var(--accent);line-height:1}
+.dim{opacity:.45}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head><body>
+
+
+<header><div class="wrap">
+  <div class="top">
+    <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 27 13 5h6l7 22z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><circle cx="12" cy="20" r="2.6" fill="var(--accent)"/><circle cx="18.5" cy="14" r="2.3" fill="var(--accent)"/><circle cx="15" cy="9" r="1.8" fill="var(--accent)"/></svg>GRIMPE EPS</div>
+    <select id="classSel" aria-label="Classe"></select>
+  </div>
+  <nav role="tablist" id="tabs">
+    <button data-tab="seance" role="tab">Séance</button>
+    <button data-tab="classement" role="tab">Classement</button>
+    <button data-tab="eleves" role="tab">Élèves &amp; permis</button>
+    <button data-tab="voies" role="tab">Voies</button>
+    <button data-tab="donnees" role="tab">Données</button>
+  </nav>
+</div></header>
+<main class="wrap" id="main"></main>
+<div id="modal"></div>
+
+<script>
+"use strict";
+/* ---------- stockage ---------- */
+const KEY="grimpe-eps-v1";
+const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
+let S=null;
+const uid=()=>Math.random().toString(36).slice(2,10);
+const norm=s=>String(s??"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const t=localStorage.getItem(KEY);if(t)return JSON.parse(t)}catch(e){}return null}
+function demo(){
+  const cid=uid();
+  const noms=[["MARTIN","Léa"],["BERNARD","Hugo"],["DUBOIS","Inès"],["LEROY","Nathan"],["MOREAU","Chloé"],["SIMON","Yanis"],["LAURENT","Manon"],["LEFEBVRE","Enzo"]];
+  const eleves=noms.map(([n,p],i)=>({id:uid(),nom:n,prenom:p,permis:{grimper:i<6,assurer:i<5,tete:i<2}}));
+  const vs=[["1","jaune","4a","A",8],["2","vert","4b","A",8],["3","bleu","4c","A",9],["4","rouge","5a","B",9],["5","orange","5b","B",10],["6","noir","5c","B",10],["7","violet","6a","C",11],["8","rose","4c","C",9],["9","blanc","5a+","C",11],["10","jaune","6b","C",11]];
+  const voies=vs.map(([num,couleur,cotation,secteur,hauteur])=>({id:uid(),num,couleur,cotation,secteur,hauteur,active:true}));
+  const pass=[];const d=new Date().toISOString();
+  const add=(e,v,mode,res,a)=>pass.push({id:uid(),classeId:cid,eleveId:eleves[e].id,voieId:voies[v].id,mode,res,assureurId:a==null?null:eleves[a].id,date:d});
+  add(0,3,"moul","ok",1);add(0,4,"moul","ok",1);add(0,6,"tete","repos",1);add(1,3,"moul","ok",0);add(1,5,"moul","ok",0);
+  add(2,2,"moul","ok",3);add(3,1,"moul","ok",2);add(3,3,"moul","repos",2);add(4,0,"moul","ok",5);add(5,1,"moul","echec",4);
+  return {classes:[{id:cid,nom:"5e Exemple",eleves}],voies,passages:pass,reglages:{bonusTete:50,repos:50,uneFoisParVoie:true},classeId:cid,demo:true,tab:"seance"};
+}
+S=load()||demo();
+S.reglages=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},S.reglages||{});
+
+/* ---------- cotations & points ---------- */
+function cotIndex(c){const m=norm(c).replace(/\s/g,"").match(/^([3-9])([abc])?(\+)?/);if(!m)return -1;return (m[1]-3)*6+({a:0,b:2,c:4}[m[2]||"a"])+(m[3]?1:0)}
+function basePts(c){const i=cotIndex(c);return i<0?5:10+i*3}
+function passPts(p,v){if(!v||p.res==="echec")return 0;let x=basePts(v.cotation);if(p.mode==="tete")x*=1+S.reglages.bonusTete/100;if(p.res==="repos")x*=S.reglages.repos/100;return Math.round(x)}
+function couleurHex(c){const k=norm(c);if(COULEURS[k])return COULEURS[k];const f=Object.keys(COULEURS).find(x=>k.startsWith(x));if(f)return COULEURS[f];if(/^#([0-9a-f]{3}){1,2}$/.test(k))return k;return "#9aa29d"}
+function inkOn(hex){const h=hex.replace("#","");const f=h.length===3?h.split("").map(x=>x+x).join(""):h;const r=parseInt(f.slice(0,2),16),g=parseInt(f.slice(2,4),16),b=parseInt(f.slice(4,6),16);return (r*299+g*587+b*114)/1000>150?"#141414":"#ffffff"}
+const voieById=id=>S.voies.find(v=>v.id===id);
+const classe=()=>S.classes.find(c=>c.id===S.classeId)||S.classes[0];
+const eleveById=id=>{for(const c of S.classes){const e=c.eleves.find(x=>x.id===id);if(e)return e}return null};
+const fullName=e=>e?`${e.prenom} ${e.nom}`.trim():"—";
+
+function stats(e){
+  const ps=S.passages.filter(p=>p.eleveId===e.id);
+  const best={};let pts=0;
+  for(const p of ps){const v=voieById(p.voieId);const x=passPts(p,v);
+    if(S.reglages.uneFoisParVoie){if(!(p.voieId in best)||x>best[p.voieId])best[p.voieId]=x}else pts+=x}
+  if(S.reglages.uneFoisParVoie)pts=Object.values(best).reduce((a,b)=>a+b,0);
+  const oks=ps.filter(p=>p.res==="ok");
+  const reussies=new Set(oks.map(p=>p.voieId)).size;
+  let maxI=-1,maxC="—";for(const p of oks){const v=voieById(p.voieId);if(v&&cotIndex(v.cotation)>maxI){maxI=cotIndex(v.cotation);maxC=v.cotation}}
+  const tete=new Set(oks.filter(p=>p.mode==="tete").map(p=>p.voieId)).size;
+  const hauteur=oks.reduce((a,p)=>a+(+(voieById(p.voieId)||{}).hauteur||0),0);
+  const assure=S.passages.filter(p=>p.assureurId===e.id).length;
+  return {pts,reussies,maxI,maxC,tete,hauteur,assure,essais:ps.length}
+}
+
+/* ---------- rendu ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+const hold=v=>{const h=couleurHex(v.couleur);return `<span class="hold"><span class="dot" style="background:${h}"></span>${esc(v.num)}</span>`};
+const pmBadges=e=>`<span class="permis"><span class="pm ${e.permis.grimper?"on":""}" title="Permis grimper">G</span><span class="pm ${e.permis.assurer?"on":""}" title="Permis assurer">A</span><span class="pm ${e.permis.tete?"on":""}" title="Permis tête">T</span></span>`;
+const sortedVoies=()=>[...S.voies].sort((a,b)=>String(a.num).localeCompare(String(b.num),"fr",{numeric:true}));
+const sortedEleves=c=>[...c.eleves].sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,"fr"));
+const today=()=>new Date().toISOString().slice(0,10);
+
+function render(){
+  const sel=$("#classSel");
+  sel.innerHTML=S.classes.length?S.classes.map(c=>`<option value="${c.id}" ${c.id===S.classeId?"selected":""}>${esc(c.nom)} (${c.eleves.length})</option>`).join(""):`<option>Aucune classe</option>`;
+  if(!classe()&&S.classes[0])S.classeId=S.classes[0].id;
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
+  const demoBar=S.demo?`<div class="notice"><span><b>Données d'exemple.</b> Importez vos classes et vos voies dans l'onglet Données.</span><button class="btn sm" data-act="cleardemo">Effacer l'exemple</button></div>`:"";
+  $("#main").innerHTML=demoBar+({seance:vSeance,classement:vClassement,eleves:vEleves,voies:vVoies,donnees:vDonnees}[S.tab]||vSeance)();
+}
+
+function vSeance(){
+  const c=classe();
+  if(!c)return `<div class="empty">Aucune classe. Importez vos élèves dans l'onglet <b>Données</b>.</div>`;
+  const cards=sortedEleves(c).map(e=>{const s=stats(e);return `<button class="card" data-act="passage" data-id="${e.id}">
+    <span class="nm">${esc(e.prenom)}<small>${esc(e.nom)}</small></span>${pmBadges(e)}
+    <span class="st"><span class="pts">${s.pts}<small> pts</small></span><span class="lvl" title="Meilleure voie enchaînée">${esc(s.maxC)}</span></span></button>`}).join("");
+  const ids=new Set(c.eleves.map(e=>e.id));
+  const recent=S.passages.filter(p=>ids.has(p.eleveId)&&p.date.slice(0,10)===today()).slice(-12).reverse();
+  const rl=recent.length?recent.map(p=>{const v=voieById(p.voieId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · ${v?hold(v)+" "+esc(v.cotation):"voie supprimée"} · ${p.mode==="tete"?"en tête":"moulinette"}${p.assureurId?" · assuré par "+esc(fullName(eleveById(p.assureurId))):""}</span>
+    <span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":"Non finie"}</span><span class="tag">+${passPts(p,v)}</span><button class="btn sm ghost" data-act="delpass" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}).join(""):`<div class="empty">Aucun passage aujourd'hui. Touchez un élève pour noter une voie.</div>`;
+  return `<h2>Séance · ${esc(c.nom)}</h2><p class="sub">Touchez un élève pour enregistrer une voie. G = permis grimper, A = assurer, T = tête.</p>
+  <div class="grid">${cards||'<div class="empty">Classe vide.</div>'}</div>
+  <div class="lab" style="margin-top:22px">Passages du jour</div><div class="list">${rl}</div>`;
+}
+
+let draft=null;
+function openPassage(eid){
+  const e=eleveById(eid);draft={eleveId:eid,voieId:null,mode:"moul",res:"ok",assureurId:"",secteur:""};drawPassage(e)}
+function drawPassage(e){
+  const c=classe();const done=new Set(S.passages.filter(p=>p.eleveId===e.id&&p.res==="ok").map(p=>p.voieId));
+  const secteurs=[...new Set(S.voies.filter(v=>v.active).map(v=>v.secteur).filter(Boolean))];
+  const vs=sortedVoies().filter(v=>v.active&&(!draft.secteur||v.secteur===draft.secteur));
+  const vbtns=vs.map(v=>{const h=couleurHex(v.couleur);return `<button class="vbtn ${done.has(v.id)?"done":""}" style="background:${h};color:${inkOn(h)}" data-act="pickvoie" data-id="${v.id}" aria-pressed="${draft.voieId===v.id}"><span class="c">${esc(v.cotation)}</span><span class="n">n°${esc(v.num)}${done.has(v.id)?" ✓":""}</span></button>`}).join("")||`<div class="empty">Aucune voie active.</div>`;
+  const ass=sortedEleves(c).filter(x=>x.id!==e.id).map(x=>`<option value="${x.id}" ${draft.assureurId===x.id?"selected":""}>${esc(fullName(x))}${x.permis.assurer?"":" (sans permis assurer)"}</option>`).join("");
+  const v=draft.voieId?voieById(draft.voieId):null;
+  const w=[];if(!e.permis.grimper)w.push("Cet élève n'a pas encore son permis grimper.");if(draft.mode==="tete"&&!e.permis.tete)w.push("Pas de permis tête validé.");
+  const a=draft.assureurId?eleveById(draft.assureurId):null;if(a&&!a.permis.assurer)w.push(`${fullName(a)} n'a pas son permis assurer.`);
+  const prev=v?passPts({mode:draft.mode,res:draft.res},v):0;
+  $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Nouveau passage">
+    <div class="row"><h3>${esc(fullName(e))}</h3><span style="margin-left:auto">${pmBadges(e)}</span></div>
+    ${secteurs.length>1?`<div class="lab">Secteur</div><div class="seg">${["",...secteurs].map(s=>`<button data-act="secteur" data-v="${esc(s)}" aria-pressed="${draft.secteur===s}">${s?esc(s):"Tous"}</button>`).join("")}</div>`:""}
+    <div class="lab">Voie</div><div class="voies">${vbtns}</div>
+    <div class="lab">Mode</div><div class="seg"><button data-act="mode" data-v="moul" aria-pressed="${draft.mode==="moul"}">Moulinette</button><button data-act="mode" data-v="tete" aria-pressed="${draft.mode==="tete"}">En tête</button></div>
+    <div class="lab">Résultat</div><div class="seg"><button data-act="res" data-v="ok" aria-pressed="${draft.res==="ok"}">Enchaînée</button><button data-act="res" data-v="repos" aria-pressed="${draft.res==="repos"}">Avec repos / chute</button><button data-act="res" data-v="echec" aria-pressed="${draft.res==="echec"}">Non finie</button></div>
+    <div class="lab">Assureur</div><select class="in" id="assSel" style="width:100%"><option value="">— Non renseigné —</option>${ass}</select>
+    ${w.length?`<p class="warn">⚠ ${w.map(esc).join("<br>⚠ ")}</p>`:""}
+    <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><span style="margin-left:auto;color:var(--muted)">${v?`${esc(v.cotation)} → <b>+${prev} pts</b>`:"Choisissez une voie"}</span><button class="btn pri" data-act="savepass" ${v?"":"disabled"}>Enregistrer</button></div>
+  </div></div>`;
+  $("#assSel").onchange=ev=>{draft.assureurId=ev.target.value;drawPassage(e)};
+}
+const closeModal=()=>{$("#modal").innerHTML="";draft=null};
+
+function rankingRows(c){
+  const key=S.sortKey||"pts";
+  return sortedEleves(c).map(e=>({e,s:stats(e)})).sort((a,b)=>key==="niv"?(b.s.maxI-a.s.maxI)||(b.s.pts-a.s.pts):key==="voies"?(b.s.reussies-a.s.reussies)||(b.s.pts-a.s.pts):(b.s.pts-a.s.pts)||(b.s.maxI-a.s.maxI));
+}
+function vClassement(){
+  const c=classe();if(!c)return `<div class="empty">Aucune classe.</div>`;
+  const rows=rankingRows(c);const key=S.sortKey||"pts";
+  const pod=rows.slice(0,3).map((r,i)=>`<div><div class="p">${i+1}</div><b>${esc(r.e.prenom)}</b><br><span style="color:var(--muted)">${key==="niv"?esc(r.s.maxC):key==="voies"?r.s.reussies+" voies":r.s.pts+" pts"}</span></div>`).join("");
+  const tr=rows.map((r,i)=>`<tr><td class="rank">${i+1}</td><td><b>${esc(r.e.nom)}</b> ${esc(r.e.prenom)}</td><td class="num"><b>${r.s.pts}</b></td><td class="num">${r.s.reussies}</td><td><b>${esc(r.s.maxC)}</b></td><td class="num">${r.s.tete}</td><td class="num">${r.s.assure}</td><td class="num">${r.s.hauteur?r.s.hauteur+" m":"—"}</td><td>${pmBadges(r.e)}</td></tr>`).join("");
+  return `<h2>Classement · ${esc(c.nom)}</h2><p class="sub">${S.reglages.uneFoisParVoie?"Chaque voie compte une seule fois (meilleur passage).":"Tous les passages comptent."} Points = cotation${S.reglages.bonusTete?`, +${S.reglages.bonusTete} % en tête`:""}, ${S.reglages.repos} % avec repos.</p>
+  <div class="row" style="margin-bottom:12px"><span class="seg"><button data-act="sort" data-v="pts" aria-pressed="${key==="pts"}">Points</button><button data-act="sort" data-v="niv" aria-pressed="${key==="niv"}">Niveau max</button><button data-act="sort" data-v="voies" aria-pressed="${key==="voies"}">Voies enchaînées</button></span><button class="btn" data-act="expclass" style="margin-left:auto">Exporter (Excel)</button></div>
+  ${rows.length>=3?`<div class="podium">${pod}</div>`:""}
+  <div class="tbl"><table><thead><tr><th>#</th><th>Élève</th><th>Points</th><th>Voies</th><th>Niveau</th><th>Tête</th><th>Assurages</th><th>Hauteur</th><th>Permis</th></tr></thead><tbody>${tr}</tbody></table></div>`;
+}
+
+function vEleves(){
+  const c=classe();if(!c)return `<div class="empty">Aucune classe.</div>`;
+  const sw=(e,k)=>`<button class="sw" role="switch" aria-checked="${!!e.permis[k]}" data-act="permis" data-id="${e.id}" data-k="${k}" aria-label="${k}"></button>`;
+  const tr=sortedEleves(c).map(e=>{const s=stats(e);return `<tr><td><b>${esc(e.nom)}</b> ${esc(e.prenom)}</td><td>${sw(e,"grimper")}</td><td>${sw(e,"assurer")}</td><td>${sw(e,"tete")}</td><td class="num">${s.reussies}</td><td><button class="btn sm" data-act="carnet" data-id="${e.id}">Carnet</button> <button class="btn sm ghost" data-act="delel" data-id="${e.id}">Retirer</button></td></tr>`}).join("");
+  return `<h2>Élèves &amp; permis · ${esc(c.nom)}</h2><p class="sub">Validez les permis au fil du cycle. Ils s'affichent sur les cartes de la séance et déclenchent une alerte si un élève grimpe en tête ou assure sans permis.</p>
+  <div class="row" style="margin-bottom:10px"><button class="btn sm" data-act="allpermis" data-k="grimper">Tous : permis grimper</button><button class="btn sm" data-act="allpermis" data-k="assurer">Tous : permis assurer</button></div>
+  <div class="tbl"><table><thead><tr><th>Élève</th><th>Grimper</th><th>Assurer</th><th>Tête</th><th>Voies</th><th></th></tr></thead><tbody>${tr||'<tr><td colspan="6">Classe vide.</td></tr>'}</tbody></table></div>
+  <div class="lab" style="margin-top:18px">Ajouter un élève</div>
+  <div class="form"><label>Nom<input type="text" id="aNom"></label><label>Prénom<input type="text" id="aPrenom"></label><button class="btn pri" data-act="addel">Ajouter</button></div>`;
+}
+function openCarnet(eid){
+  const e=eleveById(eid);const s=stats(e);
+  const ps=S.passages.filter(p=>p.eleveId===eid).slice().reverse();
+  const li=ps.map(p=>{const v=voieById(p.voieId);return `<div class="li"><span class="grow">${v?hold(v)+" <b>"+esc(v.cotation)+"</b>":"voie supprimée"} · ${p.mode==="tete"?"tête":"moulinette"} · ${new Date(p.date).toLocaleDateString("fr-FR")}</span><span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Repos":"Non finie"}</span></div>`}).join("")||`<div class="empty">Aucune voie notée.</div>`;
+  $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Carnet de voies"><div class="row"><h3>Carnet · ${esc(fullName(e))}</h3><button class="btn ghost" style="margin-left:auto" data-act="close">Fermer</button></div>
+  <p class="sub">${s.pts} pts · ${s.reussies} voies enchaînées · niveau max <b>${esc(s.maxC)}</b> · ${s.assure} assurages${s.hauteur?" · "+s.hauteur+" m grimpés":""}</p><div class="list">${li}</div></div></div>`;
+}
+
+let editVoie=null;
+function vVoies(){
+  const cnt={};S.passages.forEach(p=>{if(p.res==="ok")cnt[p.voieId]=(cnt[p.voieId]||0)+1});
+  const tr=sortedVoies().map(v=>`<tr class="${v.active?"":"dim"}"><td>${hold(v)}</td><td>${esc(v.couleur)}</td><td><b>${esc(v.cotation)}</b></td><td class="num">${basePts(v.cotation)}</td><td>${esc(v.secteur||"—")}</td><td class="num">${v.hauteur?esc(v.hauteur)+" m":"—"}</td><td class="num">${cnt[v.id]||0}</td><td><button class="sw" role="switch" aria-checked="${!!v.active}" data-act="voieactive" data-id="${v.id}" aria-label="Voie active"></button></td><td><button class="btn sm" data-act="editvoie" data-id="${v.id}">Modifier</button> <button class="btn sm ghost" data-act="delvoie" data-id="${v.id}">Supprimer</button></td></tr>`).join("");
+  const ev=editVoie?voieById(editVoie):null;
+  const opts=Object.keys(COULEURS).map(k=>`<option value="${k}">`).join("");
+  return `<h2>Voies du mur</h2><p class="sub">${S.voies.length} voies · désactivez une voie démontée sans perdre l'historique. Points de base : 3a = 10, puis +3 par demi-cotation (4a = 28, 5a = 46, 6a = 64).</p>
+  <div class="tbl"><table><thead><tr><th>N°</th><th>Couleur</th><th>Cotation</th><th>Pts</th><th>Secteur</th><th>Hauteur</th><th>Réussites</th><th>Active</th><th></th></tr></thead><tbody>${tr||'<tr><td colspan="9">Aucune voie. Importez-les dans Données.</td></tr>'}</tbody></table></div>
+  <div class="lab" style="margin-top:18px">${ev?"Modifier la voie n°"+esc(ev.num):"Ajouter une voie"}</div>
+  <datalist id="cols">${opts}</datalist>
+  <div class="form"><label>N°<input type="text" id="vNum" value="${ev?esc(ev.num):""}"></label><label>Couleur<input type="text" id="vCoul" list="cols" value="${ev?esc(ev.couleur):""}"></label><label>Cotation<input type="text" id="vCot" placeholder="5b" value="${ev?esc(ev.cotation):""}"></label><label>Secteur<input type="text" id="vSec" value="${ev?esc(ev.secteur||""):""}"></label><label>Hauteur (m)<input type="number" id="vH" value="${ev?esc(ev.hauteur||""):""}"></label>
+  <button class="btn pri" data-act="savevoie">${ev?"Enregistrer":"Ajouter"}</button>${ev?'<button class="btn ghost" data-act="canceledit">Annuler</button>':""}</div>`;
+}
+
+function vDonnees(){
+  const inFrame=(()=>{try{return window.top!==window}catch(e){return true}})();
+  return `<h2>Données</h2><p class="sub">Tout est enregistré sur cet appareil, sans connexion. Faites une sauvegarde régulière pour passer d'une tablette à l'autre.</p>
+  ${inFrame?`<div class="notice">Dans l'aperçu Claude, les téléchargements (modèles, exports, sauvegarde) sont bloqués. Ils fonctionnent dans la version installée sur Netlify.</div>`:""}
+  <div class="panels">
+    <div class="panel"><h3>Importer des classes</h3>
+      <p>Fichier <b>.xlsx</b> ou <b>.csv</b>. Colonnes reconnues : <code>Classe</code>, <code>Nom</code>, <code>Prénom</code> (ou une colonne <code>Élève</code> « NOM Prénom » comme dans Pronote). Sans colonne Classe, chaque onglet devient une classe, ou utilisez le nom ci-dessous.</p>
+      <label class="lab" for="clsName" style="margin:0">Nom de classe si absent du fichier</label><input type="text" id="clsName" placeholder="ex. 5F">
+      <div class="row"><button class="btn pri" data-act="pick" data-t="classes">Choisir le fichier…</button><button class="btn ghost" data-act="tpl" data-t="classes">Modèle</button></div></div>
+    <div class="panel"><h3>Importer les voies</h3>
+      <p>Colonnes reconnues : <code>N°</code>, <code>Couleur</code>, <code>Cotation</code>, et en option <code>Secteur</code>, <code>Hauteur</code>. Les voies au même numéro sont mises à jour.</p>
+      <div class="row"><span class="seg"><button data-act="vmode" data-v="maj" aria-pressed="${(S.vmode||"maj")==="maj"}">Ajouter / mettre à jour</button><button data-act="vmode" data-v="remp" aria-pressed="${S.vmode==="remp"}">Remplacer tout</button></span></div>
+      <div class="row"><button class="btn pri" data-act="pick" data-t="voies">Choisir le fichier…</button><button class="btn ghost" data-act="tpl" data-t="voies">Modèle</button></div></div>
+    <div class="panel"><h3>Barème</h3>
+      <div class="form"><label>Bonus tête (%)<input type="number" id="rTete" value="${S.reglages.bonusTete}"></label><label>Avec repos (% des pts)<input type="number" id="rRepos" value="${S.reglages.repos}"></label></div>
+      <div class="row"><button class="sw" role="switch" aria-checked="${S.reglages.uneFoisParVoie}" data-act="unefois" aria-label="Une voie compte une seule fois"></button><span>Une voie ne compte qu'une fois par élève</span></div>
+      <button class="btn" data-act="savereg">Enregistrer le barème</button></div>
+    <div class="panel"><h3>Sauvegarde &amp; classes</h3>
+      <p>La sauvegarde contient classes, voies, permis et passages.</p>
+      <div class="row"><button class="btn" data-act="backup">Télécharger la sauvegarde</button><button class="btn" data-act="pick" data-t="restore">Restaurer…</button></div>
+      <div class="row"><button class="btn danger" data-act="delclass">Supprimer la classe affichée</button><button class="btn danger" data-act="resetpass">Effacer les passages de la classe</button></div></div>
+  </div>
+  <input type="file" id="fileIn" hidden accept=".xlsx,.csv,.txt,.json">`;
+}
+
+/* ---------- confirmation intégrée ---------- */
+function ask(msg,ok){
+  $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="alertdialog" style="max-width:440px"><p style="font-size:16px;margin-top:0">${esc(msg)}</p><div class="row"><button class="btn ghost" data-act="close">Annuler</button><button class="btn danger" id="okBtn" style="margin-left:auto">Confirmer</button></div></div></div>`;
+  $("#okBtn").onclick=()=>{closeModal();ok()};
+}
+
+/* ---------- actions ---------- */
+document.addEventListener("click",ev=>{
+  const t=ev.target.closest("[data-act],[data-tab]");if(!t)return;
+  if(t.dataset.tab){S.tab=t.dataset.tab;editVoie=null;save();render();return}
+  const a=t.dataset.act,id=t.dataset.id;
+  if(a==="closebg"){if(ev.target===t)closeModal();return}
+  const c=classe();
+  switch(a){
+    case "close":closeModal();break;
+    case "cleardemo":ask("Effacer la classe et les voies d'exemple ?",()=>{S={classes:[],voies:[],passages:[],reglages:S.reglages,classeId:null,tab:"donnees"};save();render()});break;
+    case "passage":openPassage(id);break;
+    case "pickvoie":draft.voieId=id;drawPassage(eleveById(draft.eleveId));break;
+    case "secteur":draft.secteur=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
+    case "mode":draft.mode=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
+    case "res":draft.res=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
+    case "savepass":{const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,voieId:draft.voieId,mode:draft.mode,res:draft.res,assureurId:draft.assureurId||null,date:new Date().toISOString()};
+      S.passages.push(p);save();const pts=passPts(p,voieById(p.voieId));closeModal();render();toast(`${fullName(eleveById(p.eleveId))} : +${pts} pts`);break}
+    case "delpass":S.passages=S.passages.filter(p=>p.id!==id);save();render();toast("Passage annulé");break;
+    case "sort":S.sortKey=t.dataset.v;save();render();break;
+    case "expclass":{const rows=rankingRows(c);const L=[["Rang","Nom","Prénom","Points","Voies enchaînées","Niveau max","Voies en tête","Assurages","Hauteur (m)","Permis grimper","Permis assurer","Permis tête"]];
+      rows.forEach((r,i)=>L.push([i+1,r.e.nom,r.e.prenom,r.s.pts,r.s.reussies,r.s.maxC,r.s.tete,r.s.assure,r.s.hauteur,r.e.permis.grimper?"oui":"non",r.e.permis.assurer?"oui":"non",r.e.permis.tete?"oui":"non"]));
+      download(`escalade_${c.nom}_${today()}.csv`,toCSV(L),"text/csv");break}
+    case "permis":{const e=eleveById(id);e.permis[t.dataset.k]=!e.permis[t.dataset.k];save();render();break}
+    case "allpermis":c.eleves.forEach(e=>e.permis[t.dataset.k]=true);save();render();break;
+    case "carnet":openCarnet(id);break;
+    case "delel":ask(`Retirer ${fullName(eleveById(id))} de la classe ? Ses passages seront effacés.`,()=>{c.eleves=c.eleves.filter(e=>e.id!==id);S.passages=S.passages.filter(p=>p.eleveId!==id);save();render()});break;
+    case "addel":{const n=$("#aNom").value.trim(),p=$("#aPrenom").value.trim();if(!n&&!p)return toast("Saisissez un nom");c.eleves.push({id:uid(),nom:n.toUpperCase(),prenom:p,permis:{grimper:false,assurer:false,tete:false}});save();render();break}
+    case "voieactive":{const v=voieById(id);v.active=!v.active;save();render();break}
+    case "editvoie":editVoie=id;render();$("#vNum").focus();break;
+    case "canceledit":editVoie=null;render();break;
+    case "delvoie":ask("Supprimer cette voie ? Les passages enregistrés dessus ne rapporteront plus de points. Pour une voie démontée, préférez la désactiver.",()=>{S.voies=S.voies.filter(v=>v.id!==id);save();render()});break;
+    case "savevoie":{const o={num:$("#vNum").value.trim(),couleur:$("#vCoul").value.trim(),cotation:$("#vCot").value.trim(),secteur:$("#vSec").value.trim(),hauteur:$("#vH").value.trim()};
+      if(!o.cotation)return toast("Indiquez la cotation");
+      if(editVoie)Object.assign(voieById(editVoie),o);else S.voies.push(Object.assign({id:uid(),active:true},o,{num:o.num||String(S.voies.length+1)}));
+      editVoie=null;S.demo=false;save();render();toast("Voie enregistrée");break}
+    case "vmode":S.vmode=t.dataset.v;render();break;
+    case "unefois":S.reglages.uneFoisParVoie=!S.reglages.uneFoisParVoie;save();render();break;
+    case "savereg":S.reglages.bonusTete=+$("#rTete").value||0;S.reglages.repos=+$("#rRepos").value||0;save();toast("Barème enregistré");break;
+    case "pick":pickTarget=t.dataset.t;$("#fileIn").value="";$("#fileIn").click();break;
+    case "tpl":t.dataset.t==="classes"?download("modele_classes.csv",toCSV([["Classe","Nom","Prénom"],["5F","MARTIN","Léa"],["5F","BERNARD","Hugo"],["4B","DUBOIS","Inès"]]),"text/csv"):download("modele_voies.csv",toCSV([["N°","Couleur","Cotation","Secteur","Hauteur"],[1,"jaune","4a","A",8],[2,"vert","4c","A",8],[3,"rouge","5b","B",10]]),"text/csv");break;
+    case "backup":download(`grimpe-eps_sauvegarde_${today()}.json`,JSON.stringify(S),"application/json");break;
+    case "delclass":if(c)ask(`Supprimer la classe ${c.nom} et tous ses passages ?`,()=>{const ids=new Set(c.eleves.map(e=>e.id));S.passages=S.passages.filter(p=>!ids.has(p.eleveId));S.classes=S.classes.filter(x=>x.id!==c.id);S.classeId=S.classes[0]?.id||null;save();render()});break;
+    case "resetpass":if(c)ask(`Effacer tous les passages de ${c.nom} ? Les élèves et permis sont conservés.`,()=>{const ids=new Set(c.eleves.map(e=>e.id));S.passages=S.passages.filter(p=>!ids.has(p.eleveId));save();render()});break;
+  }
+});
+$("#classSel").onchange=e=>{S.classeId=e.target.value;save();render()};
+
+/* ---------- export ---------- */
+function toCSV(rows){return "﻿"+rows.map(r=>r.map(x=>{const s=String(x??"");return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(";")).join("\r\n")}
+function download(name,text,mime){try{const b=new Blob([text],{type:mime+";charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);toast("Fichier téléchargé : "+name)}catch(e){toast("Téléchargement impossible ici")}}
+
+/* ---------- import Excel / CSV (sans bibliothèque) ---------- */
+let pickTarget=null;
+$("#main").addEventListener("change",async ev=>{
+  if(ev.target.id!=="fileIn")return;const f=ev.target.files[0];if(!f)return;
+  try{
+    if(pickTarget==="restore"){const d=JSON.parse(await f.text());if(!d.classes||!d.voies)throw new Error("Ce fichier n'est pas une sauvegarde Grimpe EPS.");S=d;save();render();toast("Sauvegarde restaurée");return}
+    const sheets=await readTable(f);
+    if(pickTarget==="classes")importClasses(sheets);else importVoies(sheets);
+  }catch(e){toast(e.message||"Import impossible")}
+});
+async function readTable(f){
+  const name=f.name.toLowerCase();
+  if(name.endsWith(".xls"))throw new Error("Format .xls ancien : enregistrez le fichier en .xlsx ou .csv puis réessayez.");
+  if(name.endsWith(".csv")||name.endsWith(".txt")){const buf=new Uint8Array(await f.arrayBuffer());let txt=new TextDecoder("utf-8").decode(buf);if(txt.includes("\ufffd"))txt=new TextDecoder("windows-1252").decode(buf);return [{name:f.name.replace(/\.\w+$/,""),rows:parseCSV(txt.replace(/^﻿/,""))}]}
+  return await readXlsx(await f.arrayBuffer());
+}
+function parseCSV(t){const first=t.split(/\r?\n/)[0];const sep=[";","\t",","].map(s=>[s,first.split(s).length]).sort((a,b)=>b[1]-a[1])[0][0];
+  const rows=[];let row=[],cur="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+    else if(ch==='"')q=true;else if(ch===sep){row.push(cur);cur=""}else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&t[i+1]==="\n")i++;row.push(cur);rows.push(row);row=[];cur=""}else cur+=ch}
+  if(cur||row.length){row.push(cur);rows.push(row)}return rows.filter(r=>r.some(x=>String(x).trim()))}
+async function unzip(ab){
+  const u=new Uint8Array(ab),dv=new DataView(ab);let e=u.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;
+  if(e<0)throw new Error("Fichier Excel illisible (enregistrez-le en .xlsx).");
+  const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const files={};const dec=new TextDecoder();
+  for(let i=0;i<n;i++){const meth=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true);
+    const nm=dec.decode(u.subarray(p+46,p+46+nl));files[nm]={meth,cs,off};p+=46+nl+xl+cl}
+  return async nm=>{const f=files[nm];if(!f)return null;const ln=dv.getUint16(f.off+26,true),lx=dv.getUint16(f.off+28,true);const data=u.subarray(f.off+30+ln+lx,f.off+30+ln+lx+f.cs);
+    if(f.meth===0)return dec.decode(data);
+    if(typeof DecompressionStream==="undefined")throw new Error("Navigateur trop ancien pour lire l'Excel : utilisez un fichier .csv.");
+    const s=new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));return await new Response(s).text()}
+}
+const unx=s=>s.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(m,d)=>String.fromCharCode(d)).replace(/&#x([0-9a-f]+);/gi,(m,h)=>String.fromCharCode(parseInt(h,16))).replace(/&amp;/g,"&");
+const tText=x=>[...x.matchAll(/<(?:\w+:)?t(?:\s[^>]*)?>([\s\S]*?)<\/(?:\w+:)?t>/g)].map(m=>unx(m[1])).join("");
+async function readXlsx(ab){
+  const get=await unzip(ab);
+  const ss=[];const sst=await get("xl/sharedStrings.xml");if(sst)for(const m of sst.matchAll(/<(?:\w+:)?si>([\s\S]*?)<\/(?:\w+:)?si>/g))ss.push(tText(m[1]));
+  const wb=await get("xl/workbook.xml")||"";const rels=await get("xl/_rels/workbook.xml.rels")||"";
+  const relMap={};for(const m of rels.matchAll(/<Relationship\b[^>]*>/g)){const id=(m[0].match(/Id="([^"]+)"/)||[])[1],tg=(m[0].match(/Target="([^"]+)"/)||[])[1];if(id)relMap[id]=tg}
+  const out=[];
+  for(const m of wb.matchAll(/<(?:\w+:)?sheet\b[^>]*>/g)){const nm=unx((m[0].match(/name="([^"]*)"/)||[])[1]||"Feuille");const rid=(m[0].match(/r:id="([^"]+)"/)||m[0].match(/\bid="([^"]+)"/)||[])[1];
+    let tg=relMap[rid]||"";tg=tg.replace(/^\/?xl\//,"").replace(/^\//,"");const xml=await get("xl/"+tg);if(!xml)continue;
+    const rows=[];for(const r of xml.matchAll(/<(?:\w+:)?row\b[^>]*>([\s\S]*?)<\/(?:\w+:)?row>/g)){const row=[];
+      for(const c of r[1].matchAll(/<(?:\w+:)?c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/(?:\w+:)?c>)/g)){const at=c[1],body=c[2]||"";const ref=(at.match(/r="([A-Z]+)\d+"/)||[])[1];
+        let col=row.length;if(ref){col=0;for(const ch of ref)col=col*26+ch.charCodeAt(0)-64;col--}
+        const ty=(at.match(/t="(\w+)"/)||[])[1];const v=(body.match(/<(?:\w+:)?v>([\s\S]*?)<\/(?:\w+:)?v>/)||[])[1];
+        let val=ty==="s"?ss[+v]:ty==="inlineStr"?tText(body):v!=null?unx(v):"";row[col]=val??""}
+      for(let i=0;i<row.length;i++)if(row[i]==null)row[i]="";if(row.some(x=>String(x).trim()))rows.push(row)}
+    out.push({name:nm,rows})}
+  if(!out.length)throw new Error("Aucune feuille trouvée dans ce fichier.");return out;
+}
+function findHeader(rows,keys){for(let i=0;i<Math.min(rows.length,15);i++){const h=rows[i].map(norm);const idx={};for(const [k,alts] of Object.entries(keys)){const j=h.findIndex(x=>alts.some(a=>x===a||(a.length>3&&x.startsWith(a))));if(j>=0)idx[k]=j}if(Object.keys(idx).length>=2||(idx.eleve!=null))return {i,idx}}return null}
+const generic=n=>/^(feuil|sheet|feuille|tableau)\s*\d*$/i.test(n.trim());
+function importClasses(sheets){
+  const keys={classe:["classe","division","groupe"],nom:["nom de famille","nom"],prenom:["prenom"],eleve:["eleve","nom prenom","nom et prenom","nom - prenom"]};
+  const forced=($("#clsName")?.value||"").trim();let nE=0;const touched=new Set();
+  for(const sh of sheets){const h=findHeader(sh.rows,keys);if(!h)continue;const {i,idx}=h;
+    for(const r of sh.rows.slice(i+1)){let nom="",prenom="";
+      if(idx.nom!=null&&idx.prenom!=null&&idx.nom!==idx.prenom){nom=String(r[idx.nom]||"").trim();prenom=String(r[idx.prenom]||"").trim()}
+      else{const full=String(r[idx.eleve??idx.nom]||"").trim();const w=full.split(/\s+/);const up=w.filter(x=>x===x.toUpperCase()&&/[A-ZÀ-Ý]/.test(x));nom=up.join(" ");prenom=w.filter(x=>!up.includes(x)).join(" ");if(!nom){nom=w[0]||"";prenom=w.slice(1).join(" ")}}
+      if(!nom&&!prenom)continue;
+      const cn=(forced||(idx.classe!=null?String(r[idx.classe]||"").trim():"")||(generic(sh.name)?"Classe importée":sh.name)).trim();
+      let c=S.classes.find(x=>norm(x.nom)===norm(cn));if(!c){c={id:uid(),nom:cn,eleves:[]};S.classes.push(c)}
+      touched.add(c.id);
+      if(!c.eleves.some(e=>norm(e.nom)===norm(nom)&&norm(e.prenom)===norm(prenom))){c.eleves.push({id:uid(),nom,prenom,permis:{grimper:false,assurer:false,tete:false}});nE++}}}
+  if(!touched.size)throw new Error("Colonnes introuvables : il faut au moins Nom et Prénom (ou une colonne Élève).");
+  dropDemo();S.classeId=[...touched][0];S.tab="eleves";save();render();toast(`${nE} élèves importés dans ${touched.size} classe${touched.size>1?"s":""}`);
+}
+function importVoies(sheets){
+  const keys={num:["n°","no","num","numero","voie","n"],couleur:["couleur","prise","prises"],cotation:["cotation","cot","niveau","difficulte","grade"],secteur:["secteur","couloir","ligne","pan","mur","zone"],hauteur:["hauteur","haut"]};
+  const list=[];
+  for(const sh of sheets){const h=findHeader(sh.rows,keys);if(!h||h.idx.cotation==null)continue;const {i,idx}=h;
+    for(const r of sh.rows.slice(i+1)){const cot=String(r[idx.cotation]??"").trim();if(!cot)continue;
+      list.push({num:idx.num!=null?String(r[idx.num]??"").trim():"",couleur:idx.couleur!=null?String(r[idx.couleur]??"").trim():"",cotation:cot,secteur:idx.secteur!=null?String(r[idx.secteur]??"").trim():"",hauteur:idx.hauteur!=null?String(r[idx.hauteur]??"").replace(",",".").trim():""})}}
+  if(!list.length)throw new Error("Colonne Cotation introuvable dans le fichier.");
+  dropDemo();
+  if(S.vmode==="remp"){const keep=new Set(S.passages.map(p=>p.voieId));S.voies=S.voies.filter(v=>keep.has(v.id)).map(v=>({...v,active:false}))}
+  let add=0,maj=0;list.forEach((o,k)=>{if(!o.num)o.num=String(k+1);const ex=S.voies.find(v=>String(v.num)===o.num);if(ex){Object.assign(ex,o,{active:true});maj++}else{S.voies.push(Object.assign({id:uid(),active:true},o));add++}});
+  S.tab="voies";save();render();toast(`${add} voies ajoutées, ${maj} mises à jour`);
+}
+function dropDemo(){if(S.demo){S.classes=[];S.voies=[];S.passages=[];S.demo=false}}
+
+/* ---------- démarrage ---------- */
+render();
+try{if("serviceWorker" in navigator&&location.protocol==="https:"&&window.top===window&&document.querySelector('link[rel="manifest"]'))navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(e){}
+</script>
+
+</body></html>

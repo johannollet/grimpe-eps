@@ -133,6 +133,26 @@ button.ck{cursor:pointer}
 .ck.off{opacity:.45;border-style:dashed}
 .chip .dots{display:inline-flex;gap:2px}.chip .dots i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.ck.faded{opacity:.3}
+.plan{container-type:inline-size}
+@container (max-width:640px){
+  .ck{font-size:clamp(10px,2.7cqw,15px);padding:2px 3px 3px;gap:2px;border-radius:7px}
+  .ck .dots{gap:1px}.ck .dots i{width:clamp(5px,1.7cqw,9px);height:clamp(5px,1.7cqw,9px)}
+  .ck .dots i.hit{width:clamp(8px,2.6cqw,14px);height:clamp(8px,2.6cqw,14px)}
+  .ck .badge{font-size:9px;right:-6px;top:-7px}
+  .mk{min-width:clamp(20px,6cqw,30px);height:clamp(20px,6cqw,30px);font-size:clamp(11px,3cqw,15px);padding:0 3px}
+}
+.ck .dots i.hit{width:14px;height:14px;border:2px solid #fff;outline:2px solid var(--accent)}
+.rcard{border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:18px;min-height:112px;border:3px solid rgba(0,0,0,.12);flex-wrap:wrap}
+.rcard .big{font-family:var(--display);font-weight:800;font-size:68px;line-height:.9;font-variant-numeric:tabular-nums}
+.rcard .meta{display:flex;flex-direction:column;gap:2px;font-weight:700;font-size:17px;min-width:0}
+.rcard .meta small{font-weight:400;opacity:.85;font-size:14px}
+.rcard.wait{background:var(--surface2);color:var(--muted);border-style:dashed;border-color:var(--line)}
+.rcard.land{animation:pop .55s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.88)}100%{transform:scale(1)}}
+.btn.big{font-size:19px;padding:14px 26px;font-family:var(--display);letter-spacing:.5px;text-transform:uppercase}
+.stage{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+@media (prefers-reduced-motion:reduce){.rcard.land{animation:none}}
 .top3{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;margin:6px 0 14px}
 .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r) var(--r) 0 0;text-align:center;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
 .step .medal{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:24px;color:#1b1b1b;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
@@ -174,6 +194,7 @@ body.tv .notice{display:none}
   </div>
   <nav role="tablist" id="tabs">
     <button data-tab="seance" role="tab">Séance</button>
+    <button data-tab="roulette" role="tab">Roulette</button>
     <button data-tab="classement" role="tab">Classement</button>
     <button data-tab="top" role="tab">Meilleurs grimpeurs</button>
     <button data-tab="eleves" role="tab">Élèves &amp; permis</button>
@@ -189,7 +210,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="6 · meilleurs grimpeurs";
+const APP_VERSION="7 · roulette";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -267,7 +288,7 @@ function render(){
   if(!classe()&&S.classes[0])S.classeId=S.classes[0].id;
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
   const demoBar=S.demo?`<div class="notice"><span><b>Données d'exemple.</b> Importez vos classes et vos voies dans l'onglet Données.</span><button class="btn sm" data-act="cleardemo">Effacer l'exemple</button></div>`:"";
-  $("#main").innerHTML=demoBar+({seance:vSeance,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
+  $("#main").innerHTML=demoBar+({seance:vSeance,roulette:vRoulette,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
 }
 
 function vSeance(){
@@ -364,6 +385,61 @@ function openCarnet(eid){
   ${carte}<div class="lab">Historique</div><div class="list">${li}</div></div></div>`;
 }
 
+/* ---------- roulette ---------- */
+const RL={niv:"",mode:"exact",eleveId:"",excl:true,cur:null,res:null,spin:false,planId:null};
+function rCandidats(){
+  const e=RL.eleveId?eleveById(RL.eleveId):null;const t=cotIndex(RL.niv);
+  const done=e?new Set(S.passages.filter(p=>p.eleveId===e.id&&p.res==="ok").map(p=>p.voieId)):new Set();
+  if(!RL.niv)return [];
+  return S.voies.filter(v=>v.active&&(RL.mode==="exact"?norm(v.cotation).replace(/\s/g,"")===norm(RL.niv).replace(/\s/g,""):(t>=0&&Math.abs(cotIndex(v.cotation)-t)<=2))&&!(e&&RL.excl&&done.has(v.id)));
+}
+function rPlan(c){
+  const want=RL.res||RL.cur;
+  const withRes=want?S.plans.filter(p=>placedOn(itemOf(want),p.id)):[];
+  if(RL.planId&&withRes.some(p=>p.id===RL.planId))return planById(RL.planId);
+  if(withRes.length&&!RL.spin)return withRes.sort((a,b)=>score(b)-score(a))[0];
+  function score(p){return c.filter(v=>placedOn(itemOf(v),p.id)).length}
+  const best=[...S.plans].sort((a,b)=>score(b)-score(a))[0];
+  return best&&score(best)?best:null;
+}
+function stageHTML(){
+  const c=rCandidats();const v=RL.cur;const e=RL.eleveId?eleveById(RL.eleveId):null;
+  let card;
+  if(!v)card=`<div class="rcard wait"><span class="big">?</span><span class="meta">${RL.niv?`${c.length} voie${c.length>1?"s":""} possible${c.length>1?"s":""}`:"Choisissez d'abord un niveau"}<small>${RL.niv?"Lancez la roulette !":""}</small></span></div>`;
+  else{const h=couleurHex(v.couleur);const fin=!RL.spin&&RL.res&&RL.res.id===v.id;
+    card=`<div class="rcard ${fin?"land":""}" style="background:${h};color:${inkOn(h)}"><span class="big">${esc(v.cotation)}</span><span class="meta">${cordeKey(v)?`Corde ${esc(cordeLabel(cordeKey(v)))}`:`Voie n°${esc(v.num)}`}<small>prises ${esc(v.couleur)}${cordeKey(v)?` · voie n°${esc(v.num)}`:""}${v.secteur?` · secteur ${esc(v.secteur)}`:""}</small>${fin&&e?`<small>pour ${esc(fullName(e))}</small>`:""}</span></div>`}
+  const pl=rPlan(c);
+  const plans=S.plans.filter(p=>c.some(x=>placedOn(itemOf(x),p.id)));
+  const chips=plans.length>1&&!RL.spin?`<div class="chips">${plans.map(p=>`<button class="chip" data-act="rplan" data-id="${p.id}" aria-pressed="${pl&&p.id===pl.id}">${esc(p.nom)}</button>`).join("")}</div>`:"";
+  const fin=!RL.spin&&RL.res;
+  const btns=`<div class="row"><button class="btn pri big" data-act="spin" ${RL.spin||!c.length?"disabled":""}>${RL.spin?"Ça tourne…":RL.res?"Relancer":"Lancer la roulette"}</button>${fin&&e?`<button class="btn" data-act="rnoter">Noter le passage</button>`:""}${fin&&!e?`<span class="sub" style="margin:0">Choisissez l'élève pour noter le passage directement.</span>`:""}</div>`;
+  return btns+card+chips+(pl?planHTML(pl,{ctx:"view",sel:v?v.id:null,only:new Set(c.map(x=>x.id))}):"");
+}
+function drawStage(){const el=$("#rStage");if(el)el.innerHTML=stageHTML()}
+function vRoulette(){
+  const c=classe();if(RL.eleveId&&!(c&&c.eleves.some(e=>e.id===RL.eleveId))){RL.eleveId="";RL.res=RL.cur=null}
+  const cots=[...new Set(S.voies.filter(v=>v.active).map(v=>v.cotation.trim()))].sort((a,b)=>cotIndex(a)-cotIndex(b)||a.localeCompare(b));
+  const t=cotIndex(RL.niv);const near=cots.filter(x=>Math.abs(cotIndex(x)-t)<=2);
+  const opts=c?sortedEleves(c).map(e=>`<option value="${e.id}" ${RL.eleveId===e.id?"selected":""}>${esc(fullName(e))}</option>`).join(""):"";
+  return `<h2>Roulette</h2><p class="sub">L'élève choisit son niveau, la roulette lui attribue une voie au hasard sur le plan.</p>
+  <div class="form" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"><label>Élève (facultatif)<select class="in" id="rEleve"><option value="">— Sans élève —</option>${opts}</select></label></div>
+  <div class="lab">Niveau souhaité</div>
+  <div class="chips">${cots.map(x=>`<button class="chip" data-act="rniv" data-v="${esc(x)}" aria-pressed="${norm(RL.niv)===norm(x)}">${esc(x)}</button>`).join("")||'<span class="sub">Aucune voie active : importez vos voies.</span>'}</div>
+  <div class="row" style="margin-top:10px"><span class="seg"><button data-act="rmode" data-v="exact" aria-pressed="${RL.mode==="exact"}">Ce niveau exactement</button><button data-act="rmode" data-v="proche" aria-pressed="${RL.mode==="proche"}">${RL.niv&&near.length?`Proche (${esc(near[0])} à ${esc(near[near.length-1])})`:"Niveau proche"}</button></span>
+  ${RL.eleveId?`<span class="row" style="gap:8px"><button class="sw" role="switch" aria-checked="${RL.excl}" data-act="rexcl" aria-label="Exclure les voies déjà enchaînées"></button>Exclure les voies déjà enchaînées</span>`:""}</div>
+  <div class="stage" id="rStage">${stageHTML()}</div>`;
+}
+function spin(){
+  const c=rCandidats();if(!c.length)return toast("Aucune voie disponible pour ce niveau");
+  RL.res=c[Math.floor(Math.random()*c.length)];RL.planId=null;
+  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const n=reduce||c.length===1?1:Math.min(34,16+c.length*2);const seq=[];let prev=null;
+  for(let i=0;i<n-1;i++){let x;do{x=c[Math.floor(Math.random()*c.length)]}while(c.length>1&&x===prev);seq.push(x);prev=x}
+  if(seq.length&&seq[seq.length-1]===RL.res&&c.length>1)seq.pop();
+  seq.push(RL.res);RL.spin=true;let i=0,d=40;
+  (function tick(){RL.cur=seq[i];i++;if(i>=seq.length)RL.spin=false;drawStage();if(i<seq.length){d=Math.min(d*1.13,420);setTimeout(tick,d)}})();
+}
+
 /* ---------- meilleurs grimpeurs ---------- */
 const nivOf=c=>{const m=String(c.nom).match(/^\s*(\d)/);return m?m[1]+"e":""};
 const court=e=>`${esc(e.prenom)} ${esc(String(e.nom||"").charAt(0))}.`;
@@ -439,16 +515,16 @@ function planHTML(p,o){
   const singles=S.voies.filter(v=>(!o.onlyActive||v.active)&&!cordeKey(v)&&placedOn(v.id,p.id));
   const groups=cordesList(o.onlyActive).filter(g=>placedOn("c:"+g.name,p.id));
   const mkS=singles.map(v=>{const h=couleurHex(v.couleur);const txt=o.label==="cot"?v.cotation:o.label==="reu"?nb(v):v.num;
-    const cls=["mk",o.sel===v.id?"sel":"",done.has(v.id)?"done":"",o.fadeUndone&&!done.has(v.id)?"faded":"",v.active?"":"off"].join(" ");
+    const cls=["mk",o.sel===v.id?"sel":"",done.has(v.id)?"done":"",(o.fadeUndone&&!done.has(v.id))||(o.only&&!o.only.has(v.id))?"faded":"",v.active?"":"off"].join(" ");
     const ps=placedOn(v.id,p.id);const st=`left:${ps.x}%;top:${ps.y}%;background:${h};color:${inkOn(h)}`;const lab=`Voie ${v.num}, ${v.couleur}, ${v.cotation}`;
     if(o.ctx==="view")return `<span class="${cls}" style="${st}" title="${esc(lab)}">${esc(txt)}</span>`;
     return `<button class="${cls}" style="${st}" data-act="${act}" data-id="${v.id}" aria-label="${esc(lab)}">${esc(txt)}</button>`}).join("");
   const mkG=groups.map(g=>{const ps=placedOn("c:"+g.name,p.id);const nd=g.voies.filter(v=>done.has(v.id)).length;
     const cots=g.voies.map(v=>v.cotation).sort((a,b)=>cotIndex(a)-cotIndex(b));
     const txt=o.label==="cot"?(cots.length>1?cots[0]+"–"+cots[cots.length-1]:cots[0]):o.label==="reu"?g.voies.reduce((s,v)=>s+nb(v),0):cordeLabel(g.name);
-    const dots=g.voies.map(v=>`<i class="${o.fadeUndone&&!done.has(v.id)?"u":""}" style="background:${couleurHex(v.couleur)}"></i>`).join("");
+    const dots=g.voies.map(v=>`<i class="${o.fadeUndone&&!done.has(v.id)?"u":""} ${o.only&&o.sel===v.id?"hit":""}" style="background:${couleurHex(v.couleur)}"></i>`).join("");
     const sel=o.selCorde===g.name||o.sel==="c:"+g.name||g.voies.some(v=>v.id===o.sel);
-    const cls=["ck",sel?"sel":"",g.voies.every(v=>!v.active)?"off":""].join(" ");
+    const cls=["ck",sel?"sel":"",g.voies.every(v=>!v.active)?"off":"",o.only&&!g.voies.some(v=>o.only.has(v.id))?"faded":""].join(" ");
     const inner=`${esc(txt)}<span class="dots">${dots}</span>${nd&&o.ctx!=="place"?`<span class="badge">${nd}</span>`:""}`;
     const st=`left:${ps.x}%;top:${ps.y}%`;const lab=`Corde ${cordeLabel(g.name)} : ${g.voies.map(v=>v.cotation).join(", ")}`;
     if(o.ctx==="view")return `<span class="${cls}" style="${st}" title="${esc(lab)}">${inner}</span>`;
@@ -560,6 +636,12 @@ document.addEventListener("click",ev=>{
       S.passages.push(p);save();const pts=passPts(p,voieById(p.voieId));closeModal();render();toast(`${fullName(eleveById(p.eleveId))} : +${pts} pts`);break}
     case "delpass":S.passages=S.passages.filter(p=>p.id!==id);save();render();toast("Passage annulé");break;
     case "sort":S.sortKey=t.dataset.v;save();render();break;
+    case "rniv":if(RL.spin)return;RL.niv=t.dataset.v;RL.res=RL.cur=null;render();break;
+    case "rmode":if(RL.spin)return;RL.mode=t.dataset.v;RL.res=RL.cur=null;render();break;
+    case "rexcl":if(RL.spin)return;RL.excl=!RL.excl;RL.res=RL.cur=null;render();break;
+    case "spin":if(!RL.spin)spin();break;
+    case "rplan":RL.planId=id;drawStage();break;
+    case "rnoter":{const e=eleveById(RL.eleveId);if(!e||!RL.res)return;openPassage(e.id);draft.voieId=RL.res.id;draft.corde=cordeKey(RL.res)||"";drawPassage(e);break}
     case "topper":S.topPer=t.dataset.v;save();render();break;
     case "topniv":S.topNiv=t.dataset.v;save();render();break;
     case "tv":{const on=!document.body.classList.contains("tv");document.body.classList.toggle("tv",on);
@@ -622,6 +704,7 @@ function download(name,text,mime){try{const b=new Blob([text],{type:mime+";chars
 /* ---------- import Excel / CSV (sans bibliothèque) ---------- */
 let pickTarget=null;
 $("#main").addEventListener("change",async ev=>{
+  if(ev.target.id==="rEleve"){RL.eleveId=ev.target.value;RL.res=RL.cur=null;render();return}
   if(ev.target.id==="photoIn"){const f=ev.target.files[0];if(!f)return;
     try{toast("Préparation de la photo…");const r=await compressImg(f);
       if(photoTarget==="new"){const p={id:uid(),nom:`Mur ${S.plans.length+1}`,img:r.img,ratio:r.ratio};S.plans.push(p);

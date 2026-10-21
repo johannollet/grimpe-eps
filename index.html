@@ -18,7 +18,7 @@
   --accent:#d9482b; --accent-ink:#fff; --ok:#2f8a4a; --warn:#b7791f; --bad:#b33a2f;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --r:10px;
+  --r:10px; --gold:#e3b341; --silver:#c3c9cc; --bronze:#cf9160;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#151a18; --surface:#1e2522; --surface2:#28312d; --ink:#e7ece8; --muted:#9aa7a0; --line:#34403a;
@@ -133,6 +133,27 @@ button.ck{cursor:pointer}
 .ck.off{opacity:.45;border-style:dashed}
 .chip .dots{display:inline-flex;gap:2px}.chip .dots i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.top3{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;margin:6px 0 14px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r) var(--r) 0 0;text-align:center;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.step .medal{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:24px;color:#1b1b1b;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.step .who{font-weight:700;font-size:16px;line-height:1.2;overflow-wrap:anywhere}
+.step .cl{color:var(--muted);font-size:13px}
+.step .val{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.step .val small{font-size:14px;color:var(--muted)}
+.step.s1{padding-block:20px 46px;border-color:var(--gold);border-width:2px}
+.step.s2{padding-bottom:26px}.step.s3{padding-bottom:12px}
+.m1{background:var(--gold)}.m2{background:var(--silver)}.m3{background:var(--bronze)}
+.records{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.rec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.rec .k{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700}
+.rec .v{font-family:var(--display);font-weight:800;font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
+.rec .v small{font-size:15px;color:var(--muted)}
+.rec .n{font-weight:700;line-height:1.3}
+.rec .n span{font-weight:400;color:var(--muted)}
+body.tv header{display:none}
+body.tv main{font-size:1.2em;max-width:1300px}
+body.tv .step .val,body.tv .rec .v{font-size:46px}
+body.tv .notice{display:none}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip.ghost{border-style:dashed;color:var(--muted)}
@@ -154,6 +175,7 @@ button.ck{cursor:pointer}
   <nav role="tablist" id="tabs">
     <button data-tab="seance" role="tab">Séance</button>
     <button data-tab="classement" role="tab">Classement</button>
+    <button data-tab="top" role="tab">Meilleurs grimpeurs</button>
     <button data-tab="eleves" role="tab">Élèves &amp; permis</button>
     <button data-tab="voies" role="tab">Voies</button>
     <button data-tab="plan" role="tab">Plan du mur</button>
@@ -167,7 +189,7 @@ button.ck{cursor:pointer}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="5 · plans multiples";
+const APP_VERSION="6 · meilleurs grimpeurs";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -214,8 +236,8 @@ const classe=()=>S.classes.find(c=>c.id===S.classeId)||S.classes[0];
 const eleveById=id=>{for(const c of S.classes){const e=c.eleves.find(x=>x.id===id);if(e)return e}return null};
 const fullName=e=>e?`${e.prenom} ${e.nom}`.trim():"—";
 
-function stats(e){
-  const ps=S.passages.filter(p=>p.eleveId===e.id);
+function stats(e,since){
+  const ps=S.passages.filter(p=>p.eleveId===e.id&&(!since||p.date>=since));
   const best={};let pts=0;
   for(const p of ps){const v=voieById(p.voieId);const x=passPts(p,v);
     if(S.reglages.uneFoisParVoie){if(!(p.voieId in best)||x>best[p.voieId])best[p.voieId]=x}else pts+=x}
@@ -225,7 +247,7 @@ function stats(e){
   let maxI=-1,maxC="—";for(const p of oks){const v=voieById(p.voieId);if(v&&cotIndex(v.cotation)>maxI){maxI=cotIndex(v.cotation);maxC=v.cotation}}
   const tete=new Set(oks.filter(p=>p.mode==="tete").map(p=>p.voieId)).size;
   const hauteur=oks.reduce((a,p)=>a+(+(voieById(p.voieId)||{}).hauteur||0),0);
-  const assure=S.passages.filter(p=>p.assureurId===e.id).length;
+  const assure=S.passages.filter(p=>p.assureurId===e.id&&(!since||p.date>=since)).length;
   return {pts,reussies,maxI,maxC,tete,hauteur,assure,essais:ps.length}
 }
 
@@ -245,7 +267,7 @@ function render(){
   if(!classe()&&S.classes[0])S.classeId=S.classes[0].id;
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
   const demoBar=S.demo?`<div class="notice"><span><b>Données d'exemple.</b> Importez vos classes et vos voies dans l'onglet Données.</span><button class="btn sm" data-act="cleardemo">Effacer l'exemple</button></div>`:"";
-  $("#main").innerHTML=demoBar+({seance:vSeance,classement:vClassement,eleves:vEleves,voies:vVoies,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
+  $("#main").innerHTML=demoBar+({seance:vSeance,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
 }
 
 function vSeance(){
@@ -340,6 +362,46 @@ function openCarnet(eid){
   $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Carnet de voies"><div class="row"><h3>Carnet · ${esc(fullName(e))}</h3><button class="btn ghost" style="margin-left:auto" data-act="close">Fermer</button></div>
   <p class="sub">${s.pts} pts · ${s.reussies} voies enchaînées · niveau max <b>${esc(s.maxC)}</b> · ${s.assure} assurages${s.hauteur?" · "+s.hauteur+" m grimpés":""}</p>
   ${carte}<div class="lab">Historique</div><div class="list">${li}</div></div></div>`;
+}
+
+/* ---------- meilleurs grimpeurs ---------- */
+const nivOf=c=>{const m=String(c.nom).match(/^\s*(\d)/);return m?m[1]+"e":""};
+const court=e=>`${esc(e.prenom)} ${esc(String(e.nom||"").charAt(0))}.`;
+function vTop(){
+  const per=S.topPer||"all",niv=S.topNiv||"";
+  const since=per==="all"?null:new Date(Date.now()-(+per)*864e5).toISOString();
+  const niveaux=[...new Set(S.classes.map(nivOf).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+  const cls=S.classes.filter(c=>!niv||nivOf(c)===niv);
+  const filt=`<div class="row" style="margin-bottom:12px">
+    <span class="seg"><button data-act="topper" data-v="all" aria-pressed="${per==="all"}">Depuis le début</button><button data-act="topper" data-v="30" aria-pressed="${per==="30"}">30 jours</button><button data-act="topper" data-v="7" aria-pressed="${per==="7"}">7 jours</button></span>
+    ${niveaux.length>1?`<span class="seg"><button data-act="topniv" data-v="" aria-pressed="${!niv}">Tous</button>${niveaux.map(n=>`<button data-act="topniv" data-v="${n}" aria-pressed="${niv===n}">${n}</button>`).join("")}</span>`:""}
+    <button class="btn" data-act="tv" style="margin-left:auto">${document.body.classList.contains("tv")?"Quitter le grand écran":"Grand écran"}</button></div>`;
+  const head=`<h2>Meilleurs grimpeurs${niv?" · "+niv:""}</h2><p class="sub">Toutes les classes${niv?" de "+niv:""} réunies${per==="all"?"":` · ${per} derniers jours`}. Prénom et initiale du nom seulement, pour l'affichage en classe.</p>`;
+  const rows=cls.flatMap(c=>c.eleves.map(e=>({e,c,s:stats(e,since)}))).filter(r=>r.s.essais>0||r.s.assure>0);
+  if(!rows.length)return head+filt+`<div class="empty">Aucune voie enregistrée sur cette période. Les meilleurs grimpeurs apparaîtront dès les premiers passages notés en séance.</div>`;
+  const byPts=[...rows].sort((a,b)=>b.s.pts-a.s.pts||b.s.maxI-a.s.maxI||b.s.reussies-a.s.reussies);
+  const step=(r,i)=>r?`<div class="step s${i+1}"><span class="medal m${i+1}">${i+1}</span><span class="who">${court(r.e)}</span><span class="cl">${esc(r.c.nom)}</span><span class="val">${r.s.pts}<small> pts</small></span><span class="cl">niveau ${esc(r.s.maxC)}</span></div>`:`<div></div>`;
+  const podium=`<div class="top3">${step(byPts[1],1)}${step(byPts[0],0)}${step(byPts[2],2)}</div>`;
+  const rest=byPts.slice(3,15).map((r,i)=>`<tr><td class="rank">${i+4}</td><td><b>${court(r.e)}</b></td><td>${esc(r.c.nom)}</td><td class="num"><b>${r.s.pts}</b></td><td><b>${esc(r.s.maxC)}</b></td><td class="num">${r.s.reussies}</td></tr>`).join("");
+  const rec=(k,label,fmt,unit)=>{const best=Math.max(...rows.map(r=>r.s[k]));if(!(best>0))return "";
+    const who=rows.filter(r=>r.s[k]===best);const shown=who.slice(0,3).map(r=>`${court(r.e)} <span>${esc(r.c.nom)}</span>`).join("<br>");
+    return `<div class="rec"><span class="k">${label}</span><span class="v">${fmt(who[0])}${unit?`<small> ${unit}</small>`:""}</span><span class="n">${shown}${who.length>3?`<br><span>+ ${who.length-3} autre${who.length>4?"s":""}</span>`:""}</span></div>`};
+  const records=[rec("maxI","Plus haute cotation",r=>esc(r.s.maxC)),rec("reussies","Voies enchaînées",r=>r.s.reussies),rec("tete","Voies en tête",r=>r.s.tete),
+    rec("hauteur","Mètres grimpés",r=>r.s.hauteur,"m"),rec("assure","Meilleur assureur",r=>r.s.assure,"assurages")].join("");
+  const ids=new Map();cls.forEach(c=>c.eleves.forEach(e=>ids.set(e.id,{e,c})));
+  const firsts=[...S.voies].sort((a,b)=>cotIndex(b.cotation)-cotIndex(a.cotation)).map(v=>{
+    const ok=S.passages.filter(p=>p.voieId===v.id&&p.res==="ok"&&ids.has(p.eleveId)).sort((a,b)=>a.date.localeCompare(b.date));
+    return ok.length?{v,p:ok[0],n:new Set(ok.map(x=>x.eleveId)).size}:null}).filter(Boolean).slice(0,6);
+  const fl=firsts.map(f=>{const w=ids.get(f.p.eleveId);return `<div class="li">${hold(f.v)}<b>${esc(f.v.cotation)}</b>${cordeKey(f.v)?`<span class="tag">${esc(cordeLabel(cordeKey(f.v)))}</span>`:""}<span class="grow">1<sup>re</sup> : <b>${court(w.e)}</b> (${esc(w.c.nom)}) le ${new Date(f.p.date).toLocaleDateString("fr-FR")}${f.p.mode==="tete"?" en tête":""}</span><span class="tag">${f.n} élève${f.n>1?"s":""} depuis</span></div>`}).join("");
+  const cr=cls.map(c=>{const st=c.eleves.map(e=>stats(e,since));if(!st.length)return null;const act=st.filter(x=>x.essais>0).length;
+    const mi=Math.max(-1,...st.map(x=>x.maxI));const mc=(st.find(x=>x.maxI===mi)||{}).maxC||"—";
+    return {c,moy:Math.round(st.reduce((a,x)=>a+x.pts,0)/st.length),voies:st.reduce((a,x)=>a+x.reussies,0),mc,act,n:st.length}}).filter(Boolean).sort((a,b)=>b.moy-a.moy);
+  const ctab=cr.map((x,i)=>`<tr><td class="rank">${i+1}</td><td><b>${esc(x.c.nom)}</b></td><td class="num"><b>${x.moy}</b></td><td class="num">${x.voies}</td><td><b>${esc(x.mc)}</b></td><td class="num">${x.act}/${x.n}</td></tr>`).join("");
+  return head+filt+podium
+    +(rest?`<div class="tbl" style="margin-bottom:22px"><table><thead><tr><th>#</th><th>Grimpeur</th><th>Classe</th><th>Points</th><th>Niveau</th><th>Voies</th></tr></thead><tbody>${rest}</tbody></table></div>`:"")
+    +(records?`<div class="lab">Records</div><div class="records">${records}</div>`:"")
+    +(fl?`<div class="lab" style="margin-top:22px">Premières ascensions des voies les plus dures</div><div class="list">${fl}</div>`:"")
+    +(cr.length>1?`<div class="lab" style="margin-top:22px">Classement des classes</div><div class="tbl"><table><thead><tr><th>#</th><th>Classe</th><th>Moyenne pts / élève</th><th>Voies enchaînées</th><th>Meilleur niveau</th><th>Élèves actifs</th></tr></thead><tbody>${ctab}</tbody></table></div>`:"");
 }
 
 let editVoie=null;
@@ -498,6 +560,11 @@ document.addEventListener("click",ev=>{
       S.passages.push(p);save();const pts=passPts(p,voieById(p.voieId));closeModal();render();toast(`${fullName(eleveById(p.eleveId))} : +${pts} pts`);break}
     case "delpass":S.passages=S.passages.filter(p=>p.id!==id);save();render();toast("Passage annulé");break;
     case "sort":S.sortKey=t.dataset.v;save();render();break;
+    case "topper":S.topPer=t.dataset.v;save();render();break;
+    case "topniv":S.topNiv=t.dataset.v;save();render();break;
+    case "tv":{const on=!document.body.classList.contains("tv");document.body.classList.toggle("tv",on);
+      try{if(on&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});else if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(e){}
+      render();window.scrollTo(0,0);break}
     case "expclass":{const rows=rankingRows(c);const L=[["Rang","Nom","Prénom","Points","Voies enchaînées","Niveau max","Voies en tête","Assurages","Hauteur (m)","Permis grimper","Permis assurer","Permis tête"]];
       rows.forEach((r,i)=>L.push([i+1,r.e.nom,r.e.prenom,r.s.pts,r.s.reussies,r.s.maxC,r.s.tete,r.s.assure,r.s.hauteur,r.e.permis.grimper?"oui":"non",r.e.permis.assurer?"oui":"non",r.e.permis.tete?"oui":"non"]));
       download(`escalade_${c.nom}_${today()}.csv`,toCSV(L),"text/csv");break}
@@ -545,6 +612,7 @@ document.addEventListener("click",ev=>{
     case "resetpass":if(c)ask(`Effacer tous les passages de ${c.nom} ? Les élèves et permis sont conservés.`,()=>{const ids=new Set(c.eleves.map(e=>e.id));S.passages=S.passages.filter(p=>!ids.has(p.eleveId));save();render()});break;
   }
 });
+document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&document.body.classList.contains("tv")){document.body.classList.remove("tv");render()}});
 $("#classSel").onchange=e=>{S.classeId=e.target.value;save();render()};
 
 /* ---------- export ---------- */

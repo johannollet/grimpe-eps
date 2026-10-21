@@ -133,6 +133,26 @@ button.ck{cursor:pointer}
 .ck.off{opacity:.45;border-style:dashed}
 .chip .dots{display:inline-flex;gap:2px}.chip .dots i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.badges.compact{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+.badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;padding:10px 6px;border-radius:12px;border:1px dashed var(--line);background:var(--surface);opacity:.45;filter:grayscale(1)}
+.badge.got{opacity:1;filter:none;border:2px solid var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--surface))}
+.badge .bi{font-size:28px;line-height:1}
+.badge .bn{font-weight:700;font-size:13px;line-height:1.2}
+.badge .bd{font-size:11px;color:var(--muted);line-height:1.25}
+.bcount{font-size:13px;font-weight:700;color:var(--muted)}
+.celebrate{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(10,14,12,.6);padding:20px;cursor:pointer}
+.celebrate canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.celcard{position:relative;background:var(--surface);border:3px solid var(--gold);border-radius:20px;padding:22px 26px;text-align:center;max-width:420px;width:100%;animation:pop .5s cubic-bezier(.2,1.6,.4,1);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.celt{font-family:var(--display);font-weight:800;font-size:40px;line-height:1;color:var(--accent);text-transform:uppercase}
+.celn{font-weight:700;font-size:20px;margin-top:6px}
+.celcot{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;font-family:var(--display);font-weight:800;font-size:44px;line-height:1}
+.celcot span{color:var(--muted)}.celcot .to{color:var(--ink)}.celcot b{color:var(--gold)}
+.celp{display:inline-block;margin-top:12px;background:var(--ok);color:#fff;font-weight:700;padding:5px 12px;border-radius:99px}
+.celb{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}.celb .badge{min-width:110px}
+.recstrip{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:color-mix(in srgb,var(--gold) 14%,var(--surface));border:1px solid var(--gold);border-radius:var(--r);padding:8px 12px;margin-bottom:12px}
+.recstrip b{font-family:var(--display);font-size:18px}
+@media (prefers-reduced-motion:reduce){.celcard{animation:none}}
 .pm.fl{font-weight:800}
 .fsel{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 .fdot{width:24px;height:24px;border-radius:50%;border:2px solid var(--fc);background:transparent;padding:0;flex:none}
@@ -298,7 +318,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="10.1 · foulards assureur";
+const APP_VERSION="11 · progrès & badges";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -325,6 +345,7 @@ function demoPlan(voies,pos){
   [...new Set(voies.map(v=>v.corde))].forEach((c,i,a)=>{pos["c:"+c]={[pid]:{x:+(100*(i+0.5)/a.length).toFixed(1),y:55}}});
   return {id:pid,nom:"Mur (schéma)",img:null,ratio:1.7};
 }
+function fixReg(r){r=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},r||{});r.progres=Object.assign({on:true,premiere:20,record:15,premierBloc:10,recordBloc:10},r.progres||{});return r}
 function migrate(){
   S.plans=S.plans||[];S.pos=S.pos||{};S.blocs=S.blocs||[];S.blocPass=S.blocPass||[];
   (S.classes||[]).forEach(c=>c.eleves.forEach(e=>{const p=e.permis=e.permis||{};
@@ -338,7 +359,7 @@ function migrate(){
 S=load()||demo();
 migrate();
 if(S.demo&&(!S.plans.length||!S.voies.some(v=>v.corde))){S.pos={};S.plans=[demoPlan(S.voies,S.pos)]}
-S.reglages=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},S.reglages||{});
+S.reglages=fixReg(S.reglages);
 
 /* ---------- cotations & points ---------- */
 function cotIndex(c){const m=norm(c).replace(/\s/g,"").match(/^([3-9])([abc])?(\+)?/);if(!m)return -1;return (m[1]-3)*6+({a:0,b:2,c:4}[m[2]||"a"])+(m[3]?1:0)}
@@ -366,7 +387,78 @@ function stats(e,since){
   const bp=(S.blocPass||[]).filter(p=>p.eleveId===e.id&&(!since||p.date>=since));
   const bok=[...new Set(bp.filter(p=>p.res==="ok").map(p=>p.blocId))].map(blocById).filter(Boolean);
   const bPts=bok.reduce((a,b)=>a+blocPts(b),0);const blocMax=bok.reduce((a,b)=>Math.max(a,+b.niveau||1),0);
-  return {pts:pts+bPts,ptsVoies:pts,blocPts:bPts,blocs:bok.length,blocMax,reussies,maxI,maxC,tete,hauteur,assure,essais:ps.length+bp.length}
+  const pev=progEvents(e).filter(x=>!since||x.date>=since);const PR=S.reglages.progres||{};
+  const progPts=PR.on===false?0:pev.reduce((a,x)=>a+x.pts,0);
+  return {pts:pts+bPts+progPts,ptsVoies:pts,blocPts:bPts,progPts,records:pev.filter(x=>x.t==="record").length,blocs:bok.length,blocMax,reussies,maxI,maxC,tete,hauteur,assure,essais:ps.length+bp.length}
+}
+/* ---------- progrès, records perso, badges ---------- */
+function progEvents(e){
+  const PR=S.reglages.progres||{};const ev=[];
+  const ok=S.passages.filter(p=>p.eleveId===e.id&&p.res==="ok").sort((a,b)=>a.date.localeCompare(b.date));
+  let max=-1,maxL="";
+  for(const p of ok){const v=voieById(p.voieId);if(!v)continue;const i=cotIndex(v.cotation);
+    if(max<0&&maxL===""){ev.push({t:"premiere",date:p.date,pts:+PR.premiere||0,a:v.cotation,pid:p.id,label:"Première voie en haut"});max=i;maxL=v.cotation;continue}
+    if(i>max){ev.push({t:"record",date:p.date,pts:+PR.record||0,de:maxL,a:v.cotation,pid:p.id,label:`Record perso : ${maxL} → ${v.cotation}`});max=i;maxL=v.cotation}}
+  const bok=(S.blocPass||[]).filter(p=>p.eleveId===e.id&&p.res==="ok").sort((a,b)=>a.date.localeCompare(b.date));let bmax=0;
+  for(const p of bok){const b=blocById(p.blocId);if(!b)continue;const n=+b.niveau||1;
+    if(!bmax){ev.push({t:"premierBloc",date:p.date,pts:+PR.premierBloc||0,a:etoiles(n),pid:p.id,label:"Premier bloc réussi"});bmax=n;continue}
+    if(n>bmax){ev.push({t:"recordBloc",date:p.date,pts:+PR.recordBloc||0,de:etoiles(bmax),a:etoiles(n),pid:p.id,label:`Record bloc : ${etoiles(bmax)} → ${etoiles(n)}`});bmax=n}}
+  return ev;
+}
+function progression(e,since){
+  const ok=S.passages.filter(p=>p.eleveId===e.id&&p.res==="ok").map(p=>({p,v:voieById(p.voieId)})).filter(x=>x.v).sort((a,b)=>a.p.date.localeCompare(b.p.date));
+  if(!ok.length)return null;
+  const before=since?ok.filter(x=>x.p.date<since):[];const during=since?ok.filter(x=>x.p.date>=since):ok;if(!during.length)return null;
+  const best=a=>a.reduce((m,x)=>cotIndex(x.v.cotation)>cotIndex(m.v.cotation)?x:m,a[0]);
+  const from=before.length?best(before):during[0];const to=best(before.concat(during));
+  return {from:from.v.cotation,to:to.v.cotation,gain:Math.max(0,cotIndex(to.v.cotation)-cotIndex(from.v.cotation))};
+}
+const BADGES=[
+  {id:"sommet",ic:"⛰️",n:"Premier sommet",d:"Enchaîner sa première voie",t:x=>x.reussies>=1},
+  {id:"record",ic:"🚀",n:"Record battu",d:"Battre son record de cotation",t:x=>x.recordsAll>=1},
+  {id:"record3",ic:"📈",n:"Toujours plus haut",d:"Battre 3 fois son record",t:x=>x.recordsAll>=3},
+  {id:"perse",ic:"💪",n:"Persévérant",d:"Enchaîner une voie après 2 essais manqués dessus",t:x=>x.perse},
+  {id:"explo5",ic:"🧭",n:"Explorateur",d:"5 voies différentes enchaînées",t:x=>x.reussies>=5},
+  {id:"explo15",ic:"🗺️",n:"Grand explorateur",d:"15 voies différentes enchaînées",t:x=>x.reussies>=15},
+  {id:"couleurs",ic:"🌈",n:"Arc-en-ciel",d:"Enchaîner des voies de 5 couleurs différentes",t:x=>x.couleurs>=5},
+  {id:"regul",ic:"📅",n:"Régulier",d:"Grimper lors de 3 séances différentes",t:x=>x.jours>=3},
+  {id:"assidu",ic:"🔥",n:"Assidu",d:"Grimper lors de 6 séances différentes",t:x=>x.jours>=6},
+  {id:"hauteur",ic:"🏔️",n:"Cent mètres",d:"Grimper 100 m au total",t:x=>x.hauteur>=100},
+  {id:"tete",ic:"🧗",n:"Premier de cordée",d:"Enchaîner une voie en tête",t:x=>x.tete>=1},
+  {id:"bloc3",ic:"🧩",n:"Bloqueur",d:"Réussir 3 blocs",t:x=>x.blocs>=3},
+  {id:"assure10",ic:"🤝",n:"Assureur de confiance",d:"Assurer 10 fois",t:x=>x.assure>=10},
+  {id:"foulard",ic:"🧣",n:"Foulard rouge",d:"Obtenir le foulard assureur rouge",t:(x,e)=>(+e.permis.assurer||0)>=4},
+];
+function badgesOf(e){
+  const s=stats(e);const ps=S.passages.filter(p=>p.eleveId===e.id);
+  const okV=ps.filter(p=>p.res==="ok").map(p=>voieById(p.voieId)).filter(Boolean);
+  const jours=new Set(ps.concat((S.blocPass||[]).filter(p=>p.eleveId===e.id)).map(p=>p.date.slice(0,10))).size;
+  const byV={};ps.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>(byV[p.voieId]=byV[p.voieId]||[]).push(p));
+  const perse=Object.values(byV).some(a=>{const i=a.findIndex(p=>p.res==="ok");return i>=2&&a.slice(0,i).filter(p=>p.res!=="ok").length>=2});
+  const x=Object.assign({},s,{recordsAll:progEvents(e).filter(v=>v.t==="record").length,jours,perse,couleurs:new Set(okV.map(v=>norm(v.couleur))).size});
+  return BADGES.filter(b=>b.t(x,e)).map(b=>b.id);
+}
+function badgesHTML(e,compact){const have=new Set(badgesOf(e));
+  return `<div class="badges ${compact?"compact":""}">${BADGES.map(b=>`<div class="badge ${have.has(b.id)?"got":""}" title="${esc(b.d)}"><span class="bi">${b.ic}</span><span class="bn">${esc(b.n)}</span>${compact?"":`<span class="bd">${esc(b.d)}</span>`}</div>`).join("")}</div>`}
+let CEL=null;
+function celebrate(e,events,newBadges){
+  if(!events.length&&!newBadges.length)return;
+  const el=document.createElement("div");el.className="celebrate";el.setAttribute("role","alertdialog");
+  const rec=events.find(x=>x.t==="record"||x.t==="recordBloc")||events[0];const pts=events.reduce((a,x)=>a+x.pts,0);
+  const title=rec?(rec.t==="record"||rec.t==="recordBloc"?"Record perso\u00a0!":rec.label+"\u00a0!"):(newBadges.length>1?"Nouveaux badges\u00a0!":"Nouveau badge\u00a0!");
+  el.innerHTML=`<canvas></canvas><div class="celcard"><div class="celt">${esc(title)}</div><div class="celn">${esc(fullName(e))}</div>
+    ${rec&&rec.de?`<div class="celcot"><span>${esc(rec.de)}</span><b>→</b><span class="to">${esc(rec.a)}</span></div>`:rec&&rec.a?`<div class="celcot"><span class="to">${esc(rec.a)}</span></div>`:""}
+    ${pts&&S.reglages.progres.on!==false?`<div class="celp">+${pts} pts de progrès</div>`:""}
+    ${newBadges.length?`<div class="celb">${newBadges.map(id=>{const b=BADGES.find(x=>x.id===id);return `<span class="badge got"><span class="bi">${b.ic}</span><span class="bn">${esc(b.n)}</span></span>`}).join("")}</div>`:""}
+    <div class="sub" style="margin:8px 0 0">Touchez pour continuer</div></div>`;
+  document.body.appendChild(el);const close=()=>{el.remove();clearTimeout(CEL)};el.onclick=close;clearTimeout(CEL);CEL=setTimeout(close,5000);
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const cv=el.querySelector("canvas");const cx=cv.getContext("2d");const W=cv.width=innerWidth,H=cv.height=innerHeight;
+  const cols=["#f2c624","#2f9e4f","#2a6fdb","#d7372b","#7b46c2","#ef7d1a"];
+  const P=Array.from({length:140},()=>({x:W/2,y:H*0.42,vx:(Math.random()-.5)*14,vy:-Math.random()*13-4,r:Math.random()*6+3,c:cols[Math.random()*6|0],a:Math.random()*6,s:(Math.random()-.5)*.3}));
+  let f=0;(function tick(){if(!el.isConnected||f>170)return;f++;cx.clearRect(0,0,W,H);
+    P.forEach(p=>{p.vy+=.32;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.s;cx.save();cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillStyle=p.c;cx.fillRect(-p.r,-p.r/2,p.r*2,p.r);cx.restore()});
+    requestAnimationFrame(tick)})();
 }
 const blocById=id=>(S.blocs||[]).find(b=>b.id===id);
 const blocPts=b=>b&&b.pts!==""&&b.pts!=null&&!isNaN(+b.pts)?+b.pts:10+10*(+b.niveau||1);
@@ -416,13 +508,16 @@ function vSeance(){
   if(!c)return `<div class="empty">Aucune classe. Importez vos élèves dans l'onglet <b>Données</b>.</div>`;
   const cards=sortedEleves(c).map(e=>{const s=stats(e);return `<button class="card" data-act="passage" data-id="${e.id}">
     <span class="nm">${esc(e.prenom)}<small>${esc(e.nom)}</small></span>${pmBadges(e)}
-    <span class="st"><span class="pts">${s.pts}<small> pts</small></span><span class="lvl" title="Meilleure voie enchaînée">${esc(s.maxC)}</span></span></button>`}).join("");
+    <span class="st"><span class="pts">${s.pts}<small> pts</small></span><span class="lvl" title="Meilleure voie enchaînée">${esc(s.maxC)}</span></span>${(()=>{const n=badgesOf(e).length;return n?`<span class="bcount" title="Badges obtenus">🏅 ${n}</span>`:""})()}</button>`}).join("");
+  const recToday=c.eleves.flatMap(e=>progEvents(e).filter(x=>x.date.slice(0,10)===today()&&(x.t==="record"||x.t==="premiere")).map(x=>({e,x})));
+  const strip=recToday.length?`<div class="recstrip"><b>🏆 Records du jour</b>${recToday.map(({e,x})=>`<span class="tag" style="background:var(--surface)">${esc(e.prenom)} : ${x.t==="premiere"?"1re voie "+esc(x.a):esc(x.de)+" → "+esc(x.a)}</span>`).join("")}</div>`:"";
+  const recIds=new Set(c.eleves.flatMap(e=>progEvents(e).map(x=>x.pid)));
   const ids=new Set(c.eleves.map(e=>e.id));
   const recent=S.passages.concat((S.blocPass||[]).map(p=>Object.assign({bloc:true},p))).filter(p=>ids.has(p.eleveId)&&p.date.slice(0,10)===today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(-12).reverse();
   const rl=recent.length?recent.map(p=>{if(p.bloc){const b=blocById(p.blocId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · bloc <b>${b?esc(b.nom):"supprimé"}</b> <span style="color:var(--gold)">${b?etoiles(b.niveau):""}</span></span><span class="tag ${p.res==="ok"?"ok":"ko"}">${p.res==="ok"?"Réussi":"Pas encore"}</span><span class="tag">+${p.res==="ok"&&b?blocPts(b):0}</span><button class="btn sm ghost" data-act="delbp" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}
     const v=voieById(p.voieId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · ${v?hold(v)+" "+esc(v.cotation):"voie supprimée"} · ${p.mode==="tete"?"en tête":"moulinette"}${p.assureurId?" · assuré par "+esc(fullName(eleveById(p.assureurId))):""}</span>
-    <span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":"Non finie"}</span><span class="tag">+${passPts(p,v)}</span><button class="btn sm ghost" data-act="delpass" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}).join(""):`<div class="empty">Aucun passage aujourd'hui. Touchez un élève pour noter une voie.</div>`;
-  return `<h2>Séance · ${esc(c.nom)}</h2><p class="sub">Touchez un élève pour enregistrer une voie ou un bloc. G = permis grimper, A = foulard assureur (à sa couleur), T = tête.</p>
+    <span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":"Non finie"}</span><span class="tag">+${passPts(p,v)}</span>${recIds.has(p.id)?'<span class="tag" style="background:var(--gold);color:#1b1b1b">🏆 record</span>':""}<button class="btn sm ghost" data-act="delpass" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}).join(""):`<div class="empty">Aucun passage aujourd'hui. Touchez un élève pour noter une voie.</div>`;
+  return `<h2>Séance · ${esc(c.nom)}</h2>${strip}<p class="sub">Touchez un élève pour enregistrer une voie ou un bloc. G = permis grimper, A = foulard assureur (à sa couleur), T = tête.</p>
   <div class="grid">${cards||'<div class="empty">Classe vide.</div>'}</div>
   <div class="lab" style="margin-top:22px">Passages du jour</div><div class="list">${rl}</div>`;
 }
@@ -502,7 +597,7 @@ const closeModal=()=>{$("#modal").innerHTML="";draft=null};
 
 function rankingRows(c){
   const key=S.sortKey||"pts";
-  return sortedEleves(c).map(e=>({e,s:stats(e)})).sort((a,b)=>key==="niv"?(b.s.maxI-a.s.maxI)||(b.s.pts-a.s.pts):key==="voies"?(b.s.reussies-a.s.reussies)||(b.s.pts-a.s.pts):(b.s.pts-a.s.pts)||(b.s.maxI-a.s.maxI));
+  return sortedEleves(c).map(e=>({e,s:stats(e)})).sort((a,b)=>key==="niv"?(b.s.maxI-a.s.maxI)||(b.s.pts-a.s.pts):key==="voies"?(b.s.reussies-a.s.reussies)||(b.s.pts-a.s.pts):key==="prog"?(b.s.progPts-a.s.progPts)||(b.s.records-a.s.records)||(b.s.pts-a.s.pts):(b.s.pts-a.s.pts)||(b.s.maxI-a.s.maxI));
 }
 function vClassement(){
   const c=classe();if(!c)return `<div class="empty">Aucune classe.</div>`;
@@ -510,7 +605,7 @@ function vClassement(){
   const pod=rows.slice(0,3).map((r,i)=>`<div><div class="p">${i+1}</div><b>${esc(r.e.prenom)}</b><br><span style="color:var(--muted)">${key==="niv"?esc(r.s.maxC):key==="voies"?r.s.reussies+" voies":r.s.pts+" pts"}</span></div>`).join("");
   const tr=rows.map((r,i)=>`<tr><td class="rank">${i+1}</td><td><b>${esc(r.e.nom)}</b> ${esc(r.e.prenom)}</td><td class="num"><b>${r.s.pts}</b></td><td class="num">${r.s.reussies}</td><td><b>${esc(r.s.maxC)}</b></td><td class="num">${r.s.blocs||"—"}</td><td class="num">${r.s.tete}</td><td class="num">${r.s.assure}</td><td class="num">${r.s.hauteur?r.s.hauteur+" m":"—"}</td><td>${pmBadges(r.e)}</td></tr>`).join("");
   return `<h2>Classement · ${esc(c.nom)}</h2><p class="sub">${S.reglages.uneFoisParVoie?"Chaque voie compte une seule fois (meilleur passage).":"Tous les passages comptent."} Points = cotation${S.reglages.bonusTete?`, +${S.reglages.bonusTete} % en tête`:""}, ${S.reglages.repos} % avec repos.</p>
-  <div class="row" style="margin-bottom:12px"><span class="seg"><button data-act="sort" data-v="pts" aria-pressed="${key==="pts"}">Points</button><button data-act="sort" data-v="niv" aria-pressed="${key==="niv"}">Niveau max</button><button data-act="sort" data-v="voies" aria-pressed="${key==="voies"}">Voies enchaînées</button></span><button class="btn" data-act="expclass" style="margin-left:auto">Exporter (Excel)</button></div>
+  <div class="row" style="margin-bottom:12px"><span class="seg"><button data-act="sort" data-v="pts" aria-pressed="${key==="pts"}">Points</button><button data-act="sort" data-v="niv" aria-pressed="${key==="niv"}">Niveau max</button><button data-act="sort" data-v="voies" aria-pressed="${key==="voies"}">Voies enchaînées</button><button data-act="sort" data-v="prog" aria-pressed="${key==="prog"}">Progrès</button></span><button class="btn" data-act="expclass" style="margin-left:auto">Exporter (Excel)</button></div>
   ${rows.length>=3?`<div class="podium">${pod}</div>`:""}
   <div class="tbl"><table><thead><tr><th>#</th><th>Élève</th><th>Points</th><th>Voies</th><th>Niveau</th><th>Blocs</th><th>Tête</th><th>Assurages</th><th>Hauteur</th><th>Permis</th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
@@ -552,6 +647,7 @@ function openEleve(eid){
     <div class="row"><h3>${esc(fullName(e))}</h3><span class="tag" style="margin-left:auto">${c?esc(c.nom):""}</span></div>
     <p class="sub" style="margin:4px 0 0">${s.pts} pts · ${s.reussies} voies enchaînées · niveau max <b>${esc(s.maxC)}</b>${s.blocs?` · ${s.blocs} bloc${s.blocs>1?"s":""}`:""} · ${s.assure} assurages</p>
     <div class="lab">Permis grimper</div>${pSwitch(e,"grimper")}
+    <div class="lab">Badges · ${badgesOf(e).length}/${BADGES.length}</div>${badgesHTML(e,true)}
     <div class="lab">Foulard assureur</div>${fSel(e,"assurer")}<p class="sub" style="margin:6px 0 0">${e.permis.assurer?`Peut assurer ${LIMITE[e.permis.assurer]}.`:"Pas encore de foulard : ne peut pas assurer."} ${hist("assurer")}</p>
     <div class="lab">Permis tête</div>${pSwitch(e,"tete")}
     <div class="form" style="margin-top:14px"><label>Nom<input type="text" id="eNom" value="${esc(e.nom)}"></label><label>Prénom<input type="text" id="eP" value="${esc(e.prenom)}"></label><button class="btn" data-act="renel" data-id="${e.id}">Enregistrer le nom</button></div>
@@ -584,6 +680,7 @@ function openCarnet(eid){
   const li=ps.map(p=>{const v=voieById(p.voieId);return `<div class="li"><span class="grow">${v?hold(v)+" <b>"+esc(v.cotation)+"</b>":"voie supprimée"} · ${p.mode==="tete"?"tête":"moulinette"} · ${new Date(p.date).toLocaleDateString("fr-FR")}</span><span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Repos":"Non finie"}</span></div>`}).join("")||`<div class="empty">Aucune voie notée.</div>`;
   $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Carnet de voies"><div class="row"><h3>Carnet · ${esc(fullName(e))}</h3><button class="btn ghost" style="margin-left:auto" data-act="close">Fermer</button></div>
   <p class="sub">${s.pts} pts · ${s.reussies} voies enchaînées · niveau max <b>${esc(s.maxC)}</b>${s.blocs?` · ${s.blocs} bloc${s.blocs>1?"s":""} réussi${s.blocs>1?"s":""} (${s.blocPts} pts)`:""} · ${s.assure} assurages${s.hauteur?" · "+s.hauteur+" m grimpés":""}</p>
+  ${(()=>{const ev=progEvents(e);return `<div class="lab">Badges · ${badgesOf(e).length}/${BADGES.length}</div>${badgesHTML(e,false)}${ev.length?`<div class="lab">Mes progrès (${s.progPts} pts)</div><div class="list">${ev.slice().reverse().map(x=>`<div class="li"><span class="grow">${x.t.startsWith("record")?"🚀":"⛰️"} ${esc(x.label)}</span><span class="tag">${new Date(x.date).toLocaleDateString("fr-FR")}</span><span class="tag ok">+${x.pts}</span></div>`).join("")}</div>`:""}`})()}
   ${carte}<div class="lab">Historique</div><div class="list">${li}</div></div></div>`;
 }
 
@@ -729,16 +826,19 @@ function vTop(){
     ${niveaux.length>1?`<span class="seg"><button data-act="topniv" data-v="" aria-pressed="${!niv}">Tous</button>${niveaux.map(n=>`<button data-act="topniv" data-v="${n}" aria-pressed="${niv===n}">${n}</button>`).join("")}</span>`:""}
     <button class="btn" data-act="tv" style="margin-left:auto">${document.body.classList.contains("tv")?"Quitter le grand écran":"Grand écran"}</button></div>`;
   const head=`<h2>Meilleurs grimpeurs${niv?" · "+niv:""}</h2><p class="sub">Toutes les classes${niv?" de "+niv:""} réunies${per==="all"?"":` · ${per} derniers jours`}. Prénom et initiale du nom seulement, pour l'affichage en classe.</p>`;
-  const rows=cls.flatMap(c=>c.eleves.map(e=>({e,c,s:stats(e,since)}))).filter(r=>r.s.essais>0||r.s.assure>0);
+  const rows=cls.flatMap(c=>c.eleves.map(e=>({e,c,s:Object.assign(stats(e,since),{nbadges:badgesOf(e).length})}))).filter(r=>r.s.essais>0||r.s.assure>0);
   if(!rows.length)return head+filt+`<div class="empty">Aucune voie enregistrée sur cette période. Les meilleurs grimpeurs apparaîtront dès les premiers passages notés en séance.</div>`;
   const byPts=[...rows].sort((a,b)=>b.s.pts-a.s.pts||b.s.maxI-a.s.maxI||b.s.reussies-a.s.reussies);
   const step=(r,i)=>r?`<div class="step s${i+1}"><span class="medal m${i+1}">${i+1}</span><span class="who">${court(r.e)}</span><span class="cl">${esc(r.c.nom)}</span><span class="val">${r.s.pts}<small> pts</small></span><span class="cl">niveau ${esc(r.s.maxC)}</span></div>`:`<div></div>`;
   const podium=`<div class="top3">${step(byPts[1],1)}${step(byPts[0],0)}${step(byPts[2],2)}</div>`;
+  const prog=rows.map(r=>({...r,pg:progression(r.e,since)})).filter(r=>(r.pg&&r.pg.gain>0)||r.s.progPts>0)
+    .sort((a,b)=>((b.pg?b.pg.gain:0)-(a.pg?a.pg.gain:0))||(b.s.progPts-a.s.progPts)).slice(0,10);
+  const progHTML=prog.length?`<div class="lab" style="margin-top:4px">📈 Plus belle progression${per==="all"?"":` · ${per} jours`}</div><div class="tbl" style="margin-bottom:22px"><table><thead><tr><th>#</th><th>Grimpeur</th><th>Classe</th><th>Progression</th><th>Records</th><th>Pts progrès</th></tr></thead><tbody>${prog.map((r,i)=>`<tr><td class="rank">${i+1}</td><td><b>${court(r.e)}</b></td><td>${esc(r.c.nom)}</td><td>${r.pg&&r.pg.gain>0?`<b>${esc(r.pg.from)} → ${esc(r.pg.to)}</b>`:"—"}</td><td class="num">${r.s.records||"—"}</td><td class="num"><b>${r.s.progPts}</b></td></tr>`).join("")}</tbody></table></div>`:"";
   const rest=byPts.slice(3,15).map((r,i)=>`<tr><td class="rank">${i+4}</td><td><b>${court(r.e)}</b></td><td>${esc(r.c.nom)}</td><td class="num"><b>${r.s.pts}</b></td><td><b>${esc(r.s.maxC)}</b></td><td class="num">${r.s.reussies}</td></tr>`).join("");
   const rec=(k,label,fmt,unit)=>{const best=Math.max(...rows.map(r=>r.s[k]));if(!(best>0))return "";
     const who=rows.filter(r=>r.s[k]===best);const shown=who.slice(0,3).map(r=>`${court(r.e)} <span>${esc(r.c.nom)}</span>`).join("<br>");
     return `<div class="rec"><span class="k">${label}</span><span class="v">${fmt(who[0])}${unit?`<small> ${unit}</small>`:""}</span><span class="n">${shown}${who.length>3?`<br><span>+ ${who.length-3} autre${who.length>4?"s":""}</span>`:""}</span></div>`};
-  const records=[rec("maxI","Plus haute cotation",r=>esc(r.s.maxC)),rec("reussies","Voies enchaînées",r=>r.s.reussies),rec("tete","Voies en tête",r=>r.s.tete),rec("blocs","Blocs réussis",r=>r.s.blocs),
+  const records=[rec("maxI","Plus haute cotation",r=>esc(r.s.maxC)),rec("reussies","Voies enchaînées",r=>r.s.reussies),rec("tete","Voies en tête",r=>r.s.tete),rec("blocs","Blocs réussis",r=>r.s.blocs),rec("nbadges","Collection de badges",r=>r.s.nbadges,"badges"),
     rec("hauteur","Mètres grimpés",r=>r.s.hauteur,"m"),rec("assure","Meilleur assureur",r=>r.s.assure,"assurages")].join("");
   const ids=new Map();cls.forEach(c=>c.eleves.forEach(e=>ids.set(e.id,{e,c})));
   const firsts=[...S.voies].sort((a,b)=>cotIndex(b.cotation)-cotIndex(a.cotation)).map(v=>{
@@ -749,7 +849,7 @@ function vTop(){
     const mi=Math.max(-1,...st.map(x=>x.maxI));const mc=(st.find(x=>x.maxI===mi)||{}).maxC||"—";
     return {c,moy:Math.round(st.reduce((a,x)=>a+x.pts,0)/st.length),voies:st.reduce((a,x)=>a+x.reussies,0),mc,act,n:st.length}}).filter(Boolean).sort((a,b)=>b.moy-a.moy);
   const ctab=cr.map((x,i)=>`<tr><td class="rank">${i+1}</td><td><b>${esc(x.c.nom)}</b></td><td class="num"><b>${x.moy}</b></td><td class="num">${x.voies}</td><td><b>${esc(x.mc)}</b></td><td class="num">${x.act}/${x.n}</td></tr>`).join("");
-  return head+filt+podium
+  return head+filt+podium+progHTML
     +(rest?`<div class="tbl" style="margin-bottom:22px"><table><thead><tr><th>#</th><th>Grimpeur</th><th>Classe</th><th>Points</th><th>Niveau</th><th>Voies</th></tr></thead><tbody>${rest}</tbody></table></div>`:"")
     +(records?`<div class="lab">Records</div><div class="records">${records}</div>`:"")
     +(fl?`<div class="lab" style="margin-top:22px">Premières ascensions des voies les plus dures</div><div class="list">${fl}</div>`:"")
@@ -894,6 +994,9 @@ function vDonnees(){
     <div class="panel"><h3>Barème</h3>
       <div class="form"><label>Bonus tête (%)<input type="number" id="rTete" value="${S.reglages.bonusTete}"></label><label>Avec repos (% des pts)<input type="number" id="rRepos" value="${S.reglages.repos}"></label></div>
       <div class="row"><button class="sw" role="switch" aria-checked="${S.reglages.uneFoisParVoie}" data-act="unefois" aria-label="Une voie compte une seule fois"></button><span>Une voie ne compte qu'une fois par élève</span></div>
+      <div class="lab" style="margin:6px 0 0">Points de progrès</div>
+      <div class="row"><button class="sw" role="switch" aria-checked="${S.reglages.progres.on!==false}" data-act="progon" aria-label="Ajouter les points de progrès"></button><span>Ajouter les points de progrès au total</span></div>
+      <div class="form"><label>1re voie en haut<input type="number" id="pPrem" value="${S.reglages.progres.premiere}"></label><label>Record de cotation<input type="number" id="pRec" value="${S.reglages.progres.record}"></label><label>1er bloc réussi<input type="number" id="pPB" value="${S.reglages.progres.premierBloc}"></label><label>Record de bloc<input type="number" id="pRB" value="${S.reglages.progres.recordBloc}"></label></div>
       <button class="btn" data-act="savereg">Enregistrer le barème</button></div>
     <div class="panel"><h3>Sauvegarde &amp; classes</h3>
       <p>La sauvegarde contient classes, voies, plans du mur (photos comprises), permis et passages.</p>
@@ -923,7 +1026,9 @@ document.addEventListener("click",ev=>{
     case "pickbloc":if(draft){draft.blocId=id;drawPassage(eleveById(draft.eleveId))}break;
     case "bres":draft.bres=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
     case "savebp":{const b=blocById(draft.blocId);if(!b)return;const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,blocId:b.id,res:draft.bres||"ok",date:new Date().toISOString()};
-      S.blocPass.push(p);save();closeModal();render();toast(p.res==="ok"?`${fullName(eleveById(p.eleveId))} : bloc ${b.nom} réussi !`:"Essai noté");break}
+      const el=eleveById(p.eleveId);const bb=new Set(badgesOf(el));
+      S.blocPass.push(p);save();closeModal();render();toast(p.res==="ok"?`${fullName(el)} : bloc ${b.nom} réussi !`:"Essai noté");
+      celebrate(el,progEvents(el).filter(x=>x.pid===p.id),badgesOf(el).filter(x=>!bb.has(x)));break}
     case "delbp":S.blocPass=S.blocPass.filter(p=>p.id!==id);save();render();toast("Passage annulé");break;
     case "blocniv":S.blocNiv=t.dataset.v;saveLocal();render();break;
     case "openbloc":openBloc(id);break;
@@ -959,7 +1064,9 @@ document.addEventListener("click",ev=>{
     case "mode":draft.mode=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
     case "res":draft.res=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
     case "savepass":{const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,voieId:draft.voieId,mode:draft.mode,res:draft.res,assureurId:draft.assureurId||null,date:new Date().toISOString()};
-      S.passages.push(p);save();const pts=passPts(p,voieById(p.voieId));closeModal();render();toast(`${fullName(eleveById(p.eleveId))} : +${pts} pts`);break}
+      const el=eleveById(p.eleveId);const bb=new Set(badgesOf(el));
+      S.passages.push(p);save();const pts=passPts(p,voieById(p.voieId));closeModal();render();toast(`${fullName(el)} : +${pts} pts`);
+      celebrate(el,progEvents(el).filter(x=>x.pid===p.id),badgesOf(el).filter(x=>!bb.has(x)));break}
     case "delpass":S.passages=S.passages.filter(p=>p.id!==id);save();render();toast("Passage annulé");break;
     case "sort":S.sortKey=t.dataset.v;save();render();break;
     case "rniv":if(RL.spin)return;RL.niv=t.dataset.v;RL.res=RL.cur=null;render();break;
@@ -1002,7 +1109,9 @@ document.addEventListener("click",ev=>{
       editVoie=null;S.demo=false;save();render();toast("Voie enregistrée");break}
     case "vmode":S.vmode=t.dataset.v;render();break;
     case "unefois":S.reglages.uneFoisParVoie=!S.reglages.uneFoisParVoie;save();render();break;
-    case "savereg":S.reglages.bonusTete=+$("#rTete").value||0;S.reglages.repos=+$("#rRepos").value||0;save();toast("Barème enregistré");break;
+    case "progon":S.reglages.progres.on=S.reglages.progres.on===false;save();render();break;
+    case "savereg":S.reglages.bonusTete=+$("#rTete").value||0;S.reglages.repos=+$("#rRepos").value||0;
+      Object.assign(S.reglages.progres,{premiere:+$("#pPrem").value||0,record:+$("#pRec").value||0,premierBloc:+$("#pPB").value||0,recordBloc:+$("#pRB").value||0});save();toast("Barème enregistré");break;
     case "pick":pickTarget=t.dataset.t;$("#fileIn").value="";$("#fileIn").click();break;
     case "tpl":t.dataset.t==="classes"?download("modele_classes.csv",toCSV([["Classe","Nom","Prénom"],["5F","MARTIN","Léa"],["5F","BERNARD","Hugo"],["4B","DUBOIS","Inès"]]),"text/csv"):download("modele_voies.csv",toCSV([["N°","Couleur","Cotation","Corde","Secteur","Hauteur"],[1,"jaune","4a",1,"A",8],[2,"vert","4c",1,"A",8],[3,"rouge","5b",1,"A",8],[4,"bleu","5a",2,"A",9],[5,"noir","5c",2,"A",9],[6,"orange","6a",2,"A",9]]),"text/csv");break;
     case "backup":download(`grimpe-eps_sauvegarde_${today()}.json`,JSON.stringify(S),"application/json");break;
@@ -1064,7 +1173,7 @@ $("#main").addEventListener("change",async ev=>{
     return}
   if(ev.target.id!=="fileIn")return;const f=ev.target.files[0];if(!f)return;
   try{
-    if(pickTarget==="restore"){const d=JSON.parse(await f.text());if(!d.classes||!d.voies)throw new Error("Ce fichier n'est pas une sauvegarde Grimpe EPS.");S=d;migrate();S.reglages=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},S.reglages||{});planSel=null;save();render();toast("Sauvegarde restaurée");return}
+    if(pickTarget==="restore"){const d=JSON.parse(await f.text());if(!d.classes||!d.voies)throw new Error("Ce fichier n'est pas une sauvegarde Grimpe EPS.");S=d;migrate();S.reglages=fixReg(S.reglages);planSel=null;save();render();toast("Sauvegarde restaurée");return}
     const sheets=await readTable(f);
     if(pickTarget==="classes")importClasses(sheets);else importVoies(sheets);
   }catch(e){toast(e.message||"Import impossible")}
@@ -1152,7 +1261,7 @@ function persistSY(){const o={code:SY.code,codeLen:SY.codeLen,cfg:SY.cfg,unlocke
   catch(e){try{localStorage.setItem(SK,JSON.stringify(Object.assign({etag:null,base:null},o)))}catch(_){}}}
 function payload(){const o={};for(const k in S)if(!LOCAL_KEYS.includes(k))o[k]=S[k];return JSON.parse(JSON.stringify(o))}
 function applyRemote(data){const keep={};LOCAL_KEYS.forEach(k=>{if(k in S)keep[k]=S[k]});S=Object.assign({},JSON.parse(JSON.stringify(data)),keep);
-  migrate();S.reglages=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},S.reglages||{});saveLocal()}
+  migrate();S.reglages=fixReg(S.reglages);saveLocal()}
 const isObj=x=>!!x&&typeof x==="object"&&!Array.isArray(x);
 const idArr=a=>Array.isArray(a)&&a.every(x=>isObj(x)&&typeof x.id==="string");
 const same=(a,b)=>a===b||JSON.stringify(a)===JSON.stringify(b);

@@ -133,6 +133,13 @@ button.ck{cursor:pointer}
 .ck.off{opacity:.45;border-style:dashed}
 .chip .dots{display:inline-flex;gap:2px}.chip .dots i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.lockbtn span{display:none;font-weight:700;font-size:13px}
+body.eleve .lockbtn{width:auto;padding:0 10px;gap:6px;display:inline-flex;align-items:center;background:var(--ink);color:var(--bg);border-color:var(--ink)}
+body.eleve .lockbtn span{display:inline}
+nav button.locked{opacity:.45}
+nav button.locked::after{content:" 🔒";font-size:13px}
+body.eleve [data-act="delpass"],body.eleve [data-act="delbp"],body.eleve [data-act="search"],body.eleve [data-act="expclass"],body.eleve [data-act="cleardemo"]{display:none!important}
+.lockcancel{margin-top:6px}
 .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
 .badges.compact{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
 .badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;padding:10px 6px;border-radius:12px;border:1px dashed var(--line);background:var(--surface);opacity:.45;filter:grayscale(1)}
@@ -296,7 +303,7 @@ body.tv .notice{display:none}
     <select id="classSel" aria-label="Classe"></select>
     <button class="iconbtn" data-act="search" aria-label="Chercher un élève" title="Chercher un élève"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <button id="syncPill" class="pill" data-act="syncnow" hidden><i></i><span></span></button>
-    <button id="lockBtn" class="iconbtn" data-act="lock" hidden aria-label="Verrouiller l'appli" title="Verrouiller l'appli"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    <button id="lockBtn" class="iconbtn lockbtn" data-act="lock" hidden aria-label="Passer en mode élève" title="Passer en mode élève"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path class="shackle" d="M8 11V8a4 4 0 0 1 7.6-1.7" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Élève</span></button>
   </div>
   <nav role="tablist" id="tabs">
     <button data-tab="seance" role="tab">Séance</button>
@@ -318,7 +325,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="11.1 · hauteur du mur";
+const APP_VERSION="12 · mode élève";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -502,8 +509,12 @@ function render(){
   const sel=$("#classSel");
   sel.innerHTML=S.classes.length?S.classes.map(c=>`<option value="${c.id}" ${c.id===S.classeId?"selected":""}>${esc(c.nom)} (${c.eleves.length})</option>`).join(""):`<option>Aucune classe</option>`;
   if(!classe()&&S.classes[0])S.classeId=S.classes[0].id;
-  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
-  const demoBar=S.demo?`<div class="notice"><span><b>Données d'exemple.</b> Importez vos classes et vos voies dans l'onglet Données.</span><button class="btn sm" data-act="cleardemo">Effacer l'exemple</button></div>`:"";
+  const prof=isProf();if(!prof&&!ELEVE_TABS.includes(S.tab))S.tab="seance";
+  document.body.classList.toggle("eleve",!prof);
+  document.querySelectorAll("#tabs button").forEach(b=>{b.setAttribute("aria-selected",b.dataset.tab===S.tab);b.classList.toggle("locked",!prof&&!ELEVE_TABS.includes(b.dataset.tab))});
+  const lb=$("#lockBtn");if(lb){lb.title=lb.ariaLabel=prof?"Passer en mode élève (seules Séance, Roulette, Classement et Meilleurs grimpeurs restent ouvertes)":"Mode élève : touchez pour revenir en mode enseignant (code)";
+    lb.querySelector(".shackle").setAttribute("d",prof?"M8 11V8a4 4 0 0 1 7.6-1.7":"M8 11V8a4 4 0 0 1 8 0v3")}
+  const demoBar=S.demo&&prof?`<div class="notice"><span><b>Données d'exemple.</b> Importez vos classes et vos voies dans l'onglet Données.</span><button class="btn sm" data-act="cleardemo">Effacer l'exemple</button></div>`:"";
   $("#main").innerHTML=demoBar+({seance:vSeance,roulette:vRoulette,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,blocs:vBlocs,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
 }
 
@@ -1023,7 +1034,8 @@ function ask(msg,ok){
 /* ---------- actions ---------- */
 document.addEventListener("click",ev=>{
   const t=ev.target.closest("[data-act],[data-tab]");if(!t)return;
-  if(t.dataset.tab){S.tab=t.dataset.tab;editVoie=null;save();render();return}
+  if(t.dataset.tab){const tab=t.dataset.tab;const go=()=>{S.tab=tab;editVoie=null;saveLocal();render();window.scrollTo(0,0)};
+    if(!isProf()&&!ELEVE_TABS.includes(tab)){askProf(go);return}go();return}
   const a=t.dataset.act,id=t.dataset.id;
   if(a==="closebg"){if(ev.target===t)closeModal();return}
   const c=classe();
@@ -1061,7 +1073,8 @@ document.addEventListener("click",ev=>{
       S.blocPass.push({id:uid(),classeId:c.id,eleveId:eid,blocId:id,res:t.dataset.r,date:new Date().toISOString()});save();render();openBloc(id);
       toast(t.dataset.r==="ok"?`${fullName(eleveById(eid))} : bloc ${b.nom} réussi ! +${blocPts(b)} pts`:"Essai noté");break}
     case "syncnow":syncNow();break;
-    case "lock":SY.unlocked=false;persistSY();showLock();break;
+    case "lock":if(isProf()){closeModal();SY.prof=false;persistSY();render();window.scrollTo(0,0);toast("Mode élève : Séance, Roulette, Classement et Meilleurs grimpeurs")}
+      else askProf(()=>{render();toast("Mode enseignant")});break;
     case "savecode":{const o=$("#cOld").value.trim(),n=$("#cNew").value.trim(),n2=$("#cNew2").value.trim();
       if(!/^\d{4,8}$/.test(n))return toast("Le nouveau code doit faire 4 à 8 chiffres");if(n!==n2)return toast("Les deux nouveaux codes sont différents");
       api("code",{newCode:n},o).then(j=>{SY.code=n;SY.cfg={salt:j.salt,hash:j.hash};persistSY();SY.codeLen=n.length;persistSY();toast("Code changé pour toutes les tablettes");render()})
@@ -1267,7 +1280,10 @@ const LOCAL_KEYS=["tab","classeId","planId","planMode","planLabel","sortKey","to
 const SK=KEY+"-sync";
 let SY={code:null,etag:null,base:null,cfg:null,unlocked:false,busy:false,timer:null,state:"off",msg:""};
 try{Object.assign(SY,JSON.parse(localStorage.getItem(SK)||"{}"))}catch(e){}
-function persistSY(){const o={code:SY.code,codeLen:SY.codeLen,cfg:SY.cfg,unlocked:SY.unlocked};try{localStorage.setItem(SK,JSON.stringify(Object.assign({etag:SY.etag,base:SY.base},o)))}
+const ELEVE_TABS=["seance","roulette","classement","top"];
+const isProf=()=>SY.prof!==false;
+function askProf(cb){showLock("",{prof:true,cb})}
+function persistSY(){const o={code:SY.code,codeLen:SY.codeLen,cfg:SY.cfg,unlocked:SY.unlocked,prof:SY.prof};try{localStorage.setItem(SK,JSON.stringify(Object.assign({etag:SY.etag,base:SY.base},o)))}
   catch(e){try{localStorage.setItem(SK,JSON.stringify(Object.assign({etag:null,base:null},o)))}catch(_){}}}
 function payload(){const o={};for(const k in S)if(!LOCAL_KEYS.includes(k))o[k]=S[k];return JSON.parse(JSON.stringify(o))}
 function applyRemote(data){const keep={};LOCAL_KEYS.forEach(k=>{if(k in S)keep[k]=S[k]});S=Object.assign({},JSON.parse(JSON.stringify(data)),keep);
@@ -1343,11 +1359,13 @@ async function syncNow(){
 }
 async function sha(t){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 let LK="";
-function showLock(msg){LK="";const el=$("#lock");el.hidden=false;
+let LKOPT=null;
+function showLock(msg,opt){LK="";LKOPT=opt||null;const el=$("#lock");el.hidden=false;
   el.innerHTML=`<div class="lockbox"><div class="brand" style="font-size:34px"><svg viewBox="0 0 32 32" aria-hidden="true" style="width:34px;height:34px"><path d="M6 27 13 5h6l7 22z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><circle cx="12" cy="20" r="2.6" fill="var(--accent)"/><circle cx="18.5" cy="14" r="2.3" fill="var(--accent)"/><circle cx="15" cy="9" r="1.8" fill="var(--accent)"/></svg>GRIMPE EPS</div>
-    <h2>Code d'accès</h2><div class="codedots" id="lkDots"></div><div class="lockmsg" id="lkMsg">${esc(msg||"")}</div>
-    <div class="keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join("")}<button data-k="del" class="muted" aria-label="Effacer">Effacer</button><button data-k="0">0</button><button data-k="ok" class="muted" aria-label="Valider">Valider</button></div></div>`;
-  el.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>lockKey(b.dataset.k));drawDots();setSync("off");$("#lockBtn").hidden=true;}
+    <h2>${LKOPT&&LKOPT.prof?"Code enseignant":"Code d'accès"}</h2><div class="codedots" id="lkDots"></div><div class="lockmsg" id="lkMsg">${esc(msg||"")}</div>
+    <div class="keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join("")}<button data-k="del" class="muted" aria-label="Effacer">Effacer</button><button data-k="0">0</button><button data-k="ok" class="muted" aria-label="Valider">Valider</button></div>${LKOPT&&LKOPT.prof?`<button class="btn ghost lockcancel" id="lkCancel">Annuler (rester en mode élève)</button>`:""}</div>`;
+  el.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>lockKey(b.dataset.k));drawDots();
+  if(LKOPT&&LKOPT.prof){$("#lkCancel").onclick=()=>{el.hidden=true;el.innerHTML="";LKOPT=null}}else{setSync("off");$("#lockBtn").hidden=true}}
 function drawDots(){const n=Math.max(4,LK.length);$("#lkDots").innerHTML=Array.from({length:n},(_,i)=>`<i class="${i<LK.length?"on":""}"></i>`).join("")}
 function lockKey(k){
   if(k==="del")LK=LK.slice(0,-1);else if(k==="ok"){if(LK.length>=4)tryUnlock();return}else if(LK.length<8)LK+=k;
@@ -1363,13 +1381,15 @@ async function tryUnlock(){
   tryUnlock.busy=false;$("#lkMsg").style.color="";
   if(!ok){const d=$("#lkDots");d.classList.remove("shake");void d.offsetWidth;d.classList.add("shake");
     $("#lkMsg").textContent=(SY.codeLen||4)===4?"Code incorrect. Code plus long ? Tapez-le puis Valider.":"Code incorrect";LK="";setTimeout(drawDots,400);return}
-  SY.code=code;SY.codeLen=code.length;if(cfg)SY.cfg=cfg;SY.unlocked=true;persistSY();
-  $("#lock").hidden=true;$("#lock").innerHTML="";$("#lockBtn").hidden=false;
+  const opt=LKOPT;LKOPT=null;
+  SY.code=code;SY.codeLen=code.length;if(cfg)SY.cfg=cfg;SY.unlocked=true;SY.prof=true;persistSY();
+  $("#lock").hidden=true;$("#lock").innerHTML="";$("#lockBtn").hidden=false;render();
+  if(opt&&opt.cb){opt.cb();return}
   toast(offline?"Déverrouillé (hors ligne)":"Bienvenue !");syncNow();
 }
 function startSync(){
-  if(!ONLINE)return;
   document.addEventListener("keydown",e=>{if($("#lock").hidden)return;if(/^\d$/.test(e.key))lockKey(e.key);else if(e.key==="Backspace")lockKey("del");else if(e.key==="Enter")lockKey("ok")});
+  if(!ONLINE){$("#lockBtn").hidden=false;return}
   setInterval(()=>{if(document.visibilityState==="visible")syncNow()},6000);
   window.addEventListener("online",syncNow);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")syncNow()});
   if(!SY.unlocked||!SY.code){showLock();return}

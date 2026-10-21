@@ -298,7 +298,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="10 · foulards";
+const APP_VERSION="10.1 · foulards assureur";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -328,8 +328,10 @@ function demoPlan(voies,pos){
 function migrate(){
   S.plans=S.plans||[];S.pos=S.pos||{};S.blocs=S.blocs||[];S.blocPass=S.blocPass||[];
   (S.classes||[]).forEach(c=>c.eleves.forEach(e=>{const p=e.permis=e.permis||{};
-    ["grimper","assurer"].forEach(k=>{if(p[k]===true)p[k]=1;else if(!p[k])p[k]=0;else p[k]=Math.max(0,Math.min(4,+p[k]||0))});
-    p.tete=!!p.tete;p.dates=p.dates||{};p.dates.grimper=p.dates.grimper||{};p.dates.assurer=p.dates.assurer||{}}));
+    if(p.assurer===true)p.assurer=1;else if(!p.assurer)p.assurer=0;else p.assurer=Math.max(0,Math.min(4,+p.assurer||0));
+    p.grimper=p.grimper===true||(+p.grimper||0)>0;
+    p.tete=!!p.tete;p.dates=p.dates||{};p.dates.assurer=p.dates.assurer||{};
+    if(p.dates.grimper&&typeof p.dates.grimper==="object"){const v=Object.values(p.dates.grimper).filter(Boolean).sort();p.dates.grimper=v[0]||""}}));
   if(S.cordes){for(const k in S.cordes){const c=S.cordes[k];if(c&&c.plan)(S.pos["c:"+k]=S.pos["c:"+k]||{})[c.plan]={x:c.x,y:c.y}}delete S.cordes}
   (S.voies||[]).forEach(v=>{if(v.pos&&v.pos.plan)(S.pos[v.id]=S.pos[v.id]||{})[v.pos.plan]={x:v.pos.x,y:v.pos.y};delete v.pos});
 }
@@ -390,7 +392,7 @@ const CRIT_DEF={
 const crit=(k,l)=>((S.reglages.criteres||{})[k]||[])[l-1]||CRIT_DEF[k][l-1];
 const fName=l=>l?FOUL[l].n:"aucun";
 const fChip=(l,k)=>l?`<span class="pm fl" style="background:${FOUL[l].c};border-color:${FOUL[l].c};color:${FOUL[l].i}" title="Foulard ${k==="grimper"?"grimpeur":"assureur"} ${FOUL[l].n}">${k==="grimper"?"G":"A"}</span>`:`<span class="pm" title="Pas de foulard ${k==="grimper"?"grimpeur":"assureur"}">${k==="grimper"?"G":"A"}</span>`;
-const pmBadges=e=>`<span class="permis">${fChip(+e.permis.grimper||0,"grimper")}${fChip(+e.permis.assurer||0,"assurer")}<span class="pm ${e.permis.tete?"on":""}" title="Permis tête">T</span></span>`;
+const pmBadges=e=>`<span class="permis"><span class="pm ${e.permis.grimper?"on":""}" title="Permis grimper">G</span>${fChip(+e.permis.assurer||0,"assurer")}<span class="pm ${e.permis.tete?"on":""}" title="Permis tête">T</span></span>`;
 function fSel(e,k){const l=+e.permis[k]||0;const d=(e.permis.dates[k]||{})[l]||"";
   return `<div class="fsel">${[1,2,3,4].map(n=>`<button class="fdot ${n<=l?"on":""} ${n===l?"cur":""}" style="--fc:${FOUL[n].c}" data-act="fset" data-id="${e.id}" data-k="${k}" data-l="${n}" aria-label="Foulard ${FOUL[n].n}" title="Foulard ${FOUL[n].n}"></button>`).join("")}
     <span class="fname">${l?FOUL[l].n:"—"}</span>${l?`<input type="date" class="fdate" data-id="${e.id}" data-k="${k}" value="${esc(d)}" aria-label="Date d'obtention">`:""}</div>`}
@@ -420,7 +422,7 @@ function vSeance(){
   const rl=recent.length?recent.map(p=>{if(p.bloc){const b=blocById(p.blocId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · bloc <b>${b?esc(b.nom):"supprimé"}</b> <span style="color:var(--gold)">${b?etoiles(b.niveau):""}</span></span><span class="tag ${p.res==="ok"?"ok":"ko"}">${p.res==="ok"?"Réussi":"Pas encore"}</span><span class="tag">+${p.res==="ok"&&b?blocPts(b):0}</span><button class="btn sm ghost" data-act="delbp" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}
     const v=voieById(p.voieId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · ${v?hold(v)+" "+esc(v.cotation):"voie supprimée"} · ${p.mode==="tete"?"en tête":"moulinette"}${p.assureurId?" · assuré par "+esc(fullName(eleveById(p.assureurId))):""}</span>
     <span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":"Non finie"}</span><span class="tag">+${passPts(p,v)}</span><button class="btn sm ghost" data-act="delpass" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}).join(""):`<div class="empty">Aucun passage aujourd'hui. Touchez un élève pour noter une voie.</div>`;
-  return `<h2>Séance · ${esc(c.nom)}</h2><p class="sub">Touchez un élève pour enregistrer une voie ou un bloc. G = foulard grimpeur, A = foulard assureur (à la couleur du foulard), T = tête.</p>
+  return `<h2>Séance · ${esc(c.nom)}</h2><p class="sub">Touchez un élève pour enregistrer une voie ou un bloc. G = permis grimper, A = foulard assureur (à sa couleur), T = tête.</p>
   <div class="grid">${cards||'<div class="empty">Classe vide.</div>'}</div>
   <div class="lab" style="margin-top:22px">Passages du jour</div><div class="list">${rl}</div>`;
 }
@@ -446,7 +448,7 @@ function drawBlocPassage(e){
     ${choix}
     ${b?`<div class="stage">${b.photo?`<img class="bphoto" src="${b.photo}" alt="Bloc ${esc(b.nom)}">`:""}${b.defi?`<div class="defi"><b>Défi :</b> ${esc(b.defi)}</div>`:""}</div>`:""}
     <div class="lab">Résultat</div><div class="seg"><button data-act="bres" data-v="ok" aria-pressed="${(draft.bres||"ok")==="ok"}">Réussi</button><button data-act="bres" data-v="echec" aria-pressed="${draft.bres==="echec"}">Pas encore</button></div>
-    ${!e.permis.grimper?`<p class="warn">⚠ Cet élève n'a pas encore de foulard grimpeur.</p>`:""}
+    ${!e.permis.grimper?`<p class="warn">⚠ Cet élève n'a pas encore son permis grimper.</p>`:""}
     <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><span style="margin-left:auto;color:var(--muted)">${b?`Bloc ${esc(b.nom)} → <b>+${(draft.bres||"ok")==="ok"?blocPts(b):0} pts</b>${doneB.has(b.id)?" (déjà réussi)":""}`:"Choisissez un bloc"}</span><button class="btn pri" data-act="savebp" ${b?"":"disabled"}>Enregistrer</button></div>
   </div></div>`;
   $("#modal .sheet").scrollTop=oldTop;
@@ -464,8 +466,7 @@ function drawPassage(e){
   const vbtns=vs.map(v=>vbtn(v,done,draft.voieId)).join("")||`<div class="empty">Aucune voie active.</div>`;
   const ass=sortedEleves(c).filter(x=>x.id!==e.id).map(x=>`<option value="${x.id}" ${draft.assureurId===x.id?"selected":""}>${esc(fullName(x))}${x.permis.assurer?` (foulard ${FOUL[x.permis.assurer].n})`:" (sans foulard assureur)"}</option>`).join("");
   const v=draft.voieId?voieById(draft.voieId):null;
-  const w=[];const gl=+e.permis.grimper||0;
-  if(!gl)w.push("Cet élève n'a pas encore de foulard grimpeur.");else if(gl<4)w.push(`Foulard grimpeur ${FOUL[gl].n} : ${LIMITE[gl]}.`);
+  const w=[];if(!e.permis.grimper)w.push("Cet élève n'a pas encore son permis grimper.");
   if(draft.mode==="tete"&&!e.permis.tete)w.push("Pas de permis tête validé.");
   const a=draft.assureurId?eleveById(draft.assureurId):null;const al=a?+a.permis.assurer||0:0;
   if(a&&!al)w.push(`${fullName(a)} n'a pas de foulard assureur : il ne peut pas assurer.`);else if(a&&al<4)w.push(`${fullName(a)} (foulard ${FOUL[al].n}) assure ${LIMITE[al]}.`);
@@ -530,15 +531,15 @@ function vEleves(){
   const total=S.classes.reduce((a,x)=>a+x.eleves.length,0);
   const srch=`<div style="margin-bottom:16px">${searchHTML("qEl",`Chercher parmi les ${total} élèves de toutes les classes (premières lettres du nom ou du prénom)`)}</div>`;
   if(!c)return `<h2>Élèves &amp; foulards</h2>`+srch+`<div class="empty">Aucune classe.</div>`;
-  const tr=sortedEleves(c).map(e=>{const s=stats(e);return `<tr><td><button class="btn sm ghost" data-act="openeleve" data-id="${e.id}" style="text-align:left"><b>${esc(e.nom)}</b> ${esc(e.prenom)}</button></td><td>${fSel(e,"grimper")}</td><td>${fSel(e,"assurer")}</td>
-    <td><div class="fsel"><button class="sw" role="switch" aria-checked="${!!e.permis.tete}" data-act="ptete" data-id="${e.id}" aria-label="Permis tête"></button>${e.permis.tete?`<input type="date" class="fdate" data-id="${e.id}" data-k="tete" value="${esc(e.permis.dates.tete||"")}" aria-label="Date d'obtention">`:""}</div></td>
+  const tr=sortedEleves(c).map(e=>{const s=stats(e);return `<tr><td><button class="btn sm ghost" data-act="openeleve" data-id="${e.id}" style="text-align:left"><b>${esc(e.nom)}</b> ${esc(e.prenom)}</button></td><td>${pSwitch(e,"grimper")}</td><td>${fSel(e,"assurer")}</td>
+    <td>${pSwitch(e,"tete")}</td>
     <td class="num">${s.reussies}</td><td><button class="btn sm" data-act="carnet" data-id="${e.id}">Carnet</button> <button class="btn sm ghost" data-act="delel" data-id="${e.id}">Retirer</button></td></tr>`}).join("");
   const cnt=k=>[1,2,3,4].map(l=>`<span class="pm fl" style="background:${FOUL[l].c};border-color:${FOUL[l].c};color:${FOUL[l].i}">${c.eleves.filter(e=>+e.permis[k]===l).length}</span>`).join(" ");
-  return `<h2>Élèves &amp; foulards · ${esc(c.nom)}</h2><p class="sub">Foulards grimpeur et assureur : vert, bleu, jaune, rouge. Touchez une couleur pour la valider (la date du jour est enregistrée, modifiable) ; touchez à nouveau la couleur actuelle pour revenir au niveau précédent.</p>
+  return `<h2>Élèves &amp; foulards · ${esc(c.nom)}</h2><p class="sub">Permis grimper et permis tête : activez l'interrupteur. Foulard assureur vert, bleu, jaune, rouge : touchez une couleur pour la valider, touchez à nouveau la couleur actuelle pour revenir au niveau précédent. La date du jour est enregistrée et reste modifiable.</p>
   ${srch}
-  <div class="row" style="margin-bottom:10px"><span class="sub" style="margin:0">Grimpeurs ${cnt("grimper")}</span><span class="sub" style="margin:0">Assureurs ${cnt("assurer")}</span><button class="btn sm" data-act="criteres" style="margin-left:auto">Critères des foulards</button></div>
-  <div class="row" style="margin-bottom:10px"><button class="btn sm" data-act="allfoul" data-k="grimper">Tous : au moins foulard vert grimpeur</button><button class="btn sm" data-act="allfoul" data-k="assurer">Tous : au moins foulard vert assureur</button></div>
-  <div class="tbl"><table><thead><tr><th>Élève</th><th>Foulard grimpeur · obtenu le</th><th>Foulard assureur · obtenu le</th><th>Tête</th><th>Voies</th><th></th></tr></thead><tbody>${tr||'<tr><td colspan="6">Classe vide.</td></tr>'}</tbody></table></div>
+  <div class="row" style="margin-bottom:10px"><span class="sub" style="margin:0">Permis grimper : <b>${c.eleves.filter(e=>e.permis.grimper).length}/${c.eleves.length}</b></span><span class="sub" style="margin:0">Foulards assureur ${cnt("assurer")}</span><button class="btn sm" data-act="criteres" style="margin-left:auto">Critères des foulards</button></div>
+  <div class="row" style="margin-bottom:10px"><button class="btn sm" data-act="allgrimp">Tous : permis grimper</button><button class="btn sm" data-act="allfoul" data-k="assurer">Tous : au moins foulard vert assureur</button></div>
+  <div class="tbl"><table><thead><tr><th>Élève</th><th>Permis grimper · obtenu le</th><th>Foulard assureur · obtenu le</th><th>Tête</th><th>Voies</th><th></th></tr></thead><tbody>${tr||'<tr><td colspan="6">Classe vide.</td></tr>'}</tbody></table></div>
   <div class="lab" style="margin-top:18px">Ajouter un élève</div>
   <div class="form"><label>Nom<input type="text" id="aNom"></label><label>Prénom<input type="text" id="aPrenom"></label><button class="btn pri" data-act="addel">Ajouter</button></div>`;
 }
@@ -550,9 +551,9 @@ function openEleve(eid){
   $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Fiche élève">
     <div class="row"><h3>${esc(fullName(e))}</h3><span class="tag" style="margin-left:auto">${c?esc(c.nom):""}</span></div>
     <p class="sub" style="margin:4px 0 0">${s.pts} pts · ${s.reussies} voies enchaînées · niveau max <b>${esc(s.maxC)}</b>${s.blocs?` · ${s.blocs} bloc${s.blocs>1?"s":""}`:""} · ${s.assure} assurages</p>
-    <div class="lab">Foulard grimpeur</div>${fSel(e,"grimper")}<p class="sub" style="margin:6px 0 0">${e.permis.grimper?`Peut grimper ${LIMITE[e.permis.grimper]}.`:"Pas encore de foulard : ne grimpe pas."} ${hist("grimper")}</p>
+    <div class="lab">Permis grimper</div>${pSwitch(e,"grimper")}
     <div class="lab">Foulard assureur</div>${fSel(e,"assurer")}<p class="sub" style="margin:6px 0 0">${e.permis.assurer?`Peut assurer ${LIMITE[e.permis.assurer]}.`:"Pas encore de foulard : ne peut pas assurer."} ${hist("assurer")}</p>
-    <div class="lab">Permis tête</div><div class="fsel"><button class="sw" role="switch" aria-checked="${!!e.permis.tete}" data-act="ptete" data-id="${e.id}" aria-label="Permis tête"></button>${e.permis.tete?`<input type="date" class="fdate" data-id="${e.id}" data-k="tete" value="${esc(e.permis.dates.tete||"")}" aria-label="Date d'obtention">`:"<span class=\"sub\" style=\"margin:0\">non validé</span>"}</div>
+    <div class="lab">Permis tête</div>${pSwitch(e,"tete")}
     <div class="form" style="margin-top:14px"><label>Nom<input type="text" id="eNom" value="${esc(e.nom)}"></label><label>Prénom<input type="text" id="eP" value="${esc(e.prenom)}"></label><button class="btn" data-act="renel" data-id="${e.id}">Enregistrer le nom</button></div>
     <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><button class="btn" data-act="carnet" data-id="${e.id}" style="margin-left:auto">Carnet</button><button class="btn pri" data-act="notereleve" data-id="${e.id}">Noter un passage</button></div>
   </div></div>`;
@@ -566,11 +567,11 @@ function openCriteres(edit){
   const card=(k,l)=>`<div class="fcard"><h4 style="background:${FOUL[l].c};color:${FOUL[l].i}">${FOUL[l].n}</h4>${edit?`<textarea id="cr-${k}-${l}">${esc(crit(k,l))}</textarea>`:`<p>${esc(crit(k,l))}</p>`}</div>`;
   $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Critères des foulards" style="max-width:1000px">
     <div class="row"><h3>Critères des foulards</h3><button class="btn ghost" data-act="close" style="margin-left:auto">Fermer</button></div>
-    <div class="lab">Foulards grimpeur</div><div class="fcards">${[1,2,3,4].map(l=>card("grimper",l)).join("")}</div>
     <div class="lab">Foulards assureur</div><div class="fcards">${[1,2,3,4].map(l=>card("assurer",l)).join("")}</div>
     <div class="row" style="margin-top:14px">${edit?`<button class="btn ghost" data-act="critreset">Revenir aux textes d'origine</button><button class="btn pri" data-act="critsave" style="margin-left:auto">Enregistrer</button>`:`<button class="btn" data-act="critedit" style="margin-left:auto">Modifier les critères</button>`}</div>
   </div></div>`;
 }
+function pSwitch(e,k){return `<div class="fsel"><button class="sw" role="switch" aria-checked="${!!e.permis[k]}" data-act="ptog" data-id="${e.id}" data-k="${k}" aria-label="Permis ${k==="tete"?"tête":"grimper"}"></button>${e.permis[k]?`<input type="date" class="fdate" data-id="${e.id}" data-k="${k}" value="${esc(e.permis.dates[k]||"")}" aria-label="Date d'obtention">`:`<span class="sub" style="margin:0">non validé</span>`}</div>`}
 function setFoulard(e,k,l){const cur=+e.permis[k]||0;const n=l===cur?l-1:l;e.permis[k]=n;e.permis.dates[k]=e.permis.dates[k]||{};
   if(n>0&&!e.permis.dates[k][n])e.permis.dates[k][n]=todayISO();
   for(let x=1;x<n;x++)if(!e.permis.dates[k][x])e.permis.dates[k][x]=e.permis.dates[k][n];}
@@ -972,12 +973,13 @@ document.addEventListener("click",ev=>{
     case "tv":{const on=!document.body.classList.contains("tv");document.body.classList.toggle("tv",on);
       try{if(on&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});else if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(e){}
       render();window.scrollTo(0,0);break}
-    case "expclass":{const rows=rankingRows(c);const L=[["Rang","Nom","Prénom","Points","Voies enchaînées","Niveau max","Blocs réussis","Points blocs","Voies en tête","Assurages","Hauteur (m)","Foulard grimpeur","Obtenu le","Foulard assureur","Obtenu le","Permis tête","Obtenu le"]];
-      rows.forEach((r,i)=>L.push([i+1,r.e.nom,r.e.prenom,r.s.pts,r.s.reussies,r.s.maxC,r.s.blocs,r.s.blocPts,r.s.tete,r.s.assure,r.s.hauteur,fName(+r.e.permis.grimper||0),fmtD((r.e.permis.dates.grimper||{})[r.e.permis.grimper]),fName(+r.e.permis.assurer||0),fmtD((r.e.permis.dates.assurer||{})[r.e.permis.assurer]),r.e.permis.tete?"oui":"non",fmtD(r.e.permis.dates.tete)]));
+    case "expclass":{const rows=rankingRows(c);const L=[["Rang","Nom","Prénom","Points","Voies enchaînées","Niveau max","Blocs réussis","Points blocs","Voies en tête","Assurages","Hauteur (m)","Permis grimper","Obtenu le","Foulard assureur","Obtenu le","Permis tête","Obtenu le"]];
+      rows.forEach((r,i)=>L.push([i+1,r.e.nom,r.e.prenom,r.s.pts,r.s.reussies,r.s.maxC,r.s.blocs,r.s.blocPts,r.s.tete,r.s.assure,r.s.hauteur,r.e.permis.grimper?"oui":"non",fmtD(r.e.permis.dates.grimper),fName(+r.e.permis.assurer||0),fmtD((r.e.permis.dates.assurer||{})[r.e.permis.assurer]),r.e.permis.tete?"oui":"non",fmtD(r.e.permis.dates.tete)]));
       download(`escalade_${c.nom}_${today()}.csv`,toCSV(L),"text/csv");break}
     case "fset":{const e=eleveById(id);setFoulard(e,t.dataset.k,+t.dataset.l);save();render();if($("#modal .sheet[aria-label='Fiche élève']"))openEleve(id);
       const l=+e.permis[t.dataset.k]||0;toast(`${fullName(e)} : foulard ${t.dataset.k==="grimper"?"grimpeur":"assureur"} ${l?FOUL[l].n:"retiré"}`);break}
-    case "ptete":{const e=eleveById(id);e.permis.tete=!e.permis.tete;if(e.permis.tete&&!e.permis.dates.tete)e.permis.dates.tete=todayISO();save();render();if($("#modal .sheet[aria-label='Fiche élève']"))openEleve(id);break}
+    case "ptog":{const e=eleveById(id);const k=t.dataset.k;e.permis[k]=!e.permis[k];if(e.permis[k]&&!e.permis.dates[k])e.permis.dates[k]=todayISO();save();render();if($("#modal .sheet[aria-label='Fiche élève']"))openEleve(id);break}
+    case "allgrimp":c.eleves.forEach(e=>{if(!e.permis.grimper){e.permis.grimper=true;if(!e.permis.dates.grimper)e.permis.dates.grimper=todayISO()}});save();render();break;
     case "allfoul":c.eleves.forEach(e=>{if(!(+e.permis[t.dataset.k]))setFoulard(e,t.dataset.k,1)});save();render();break;
     case "search":openSearch();break;
     case "openeleve":openEleve(id);break;
@@ -985,11 +987,11 @@ document.addEventListener("click",ev=>{
     case "notereleve":{const cl=classeOf(id);if(cl&&cl.id!==S.classeId){S.classeId=cl.id;saveLocal();render()}closeModal();openPassage(id);break}
     case "criteres":openCriteres(false);break;
     case "critedit":openCriteres(true);break;
-    case "critsave":{const cr={grimper:[],assurer:[]};["grimper","assurer"].forEach(k=>[1,2,3,4].forEach(l=>cr[k][l-1]=$(`#cr-${k}-${l}`).value.trim()||CRIT_DEF[k][l-1]));S.reglages.criteres=cr;save();openCriteres(false);toast("Critères enregistrés");break}
+    case "critsave":{const cr={assurer:[]};["assurer"].forEach(k=>[1,2,3,4].forEach(l=>cr[k][l-1]=$(`#cr-${k}-${l}`).value.trim()||CRIT_DEF[k][l-1]));S.reglages.criteres=cr;save();openCriteres(false);toast("Critères enregistrés");break}
     case "critreset":delete S.reglages.criteres;save();openCriteres(true);break;
     case "carnet":closeModal();openCarnet(id);break;
     case "delel":ask(`Retirer ${fullName(eleveById(id))} de la classe ? Ses passages seront effacés.`,()=>{c.eleves=c.eleves.filter(e=>e.id!==id);S.passages=S.passages.filter(p=>p.eleveId!==id);save();render()});break;
-    case "addel":{const n=$("#aNom").value.trim(),p=$("#aPrenom").value.trim();if(!n&&!p)return toast("Saisissez un nom");c.eleves.push({id:uid(),nom:n.toUpperCase(),prenom:p,permis:{grimper:0,assurer:0,tete:false,dates:{grimper:{},assurer:{}}}});save();render();break}
+    case "addel":{const n=$("#aNom").value.trim(),p=$("#aPrenom").value.trim();if(!n&&!p)return toast("Saisissez un nom");c.eleves.push({id:uid(),nom:n.toUpperCase(),prenom:p,permis:{grimper:false,assurer:0,tete:false,dates:{assurer:{}}}});save();render();break}
     case "voieactive":{const v=voieById(id);v.active=!v.active;save();render();break}
     case "editvoie":editVoie=id;render();$("#vNum").focus();break;
     case "canceledit":editVoie=null;render();break;
@@ -1034,7 +1036,7 @@ document.addEventListener("input",ev=>{const t=ev.target;if(t.id==="qEl"||t.id==
 document.addEventListener("change",async ev=>{
   const t=ev.target;
   if(t.classList&&t.classList.contains("fdate")){const e=eleveById(t.dataset.id);if(!e)return;const k=t.dataset.k;
-    if(k==="tete")e.permis.dates.tete=t.value;else{(e.permis.dates[k]=e.permis.dates[k]||{})[+e.permis[k]]=t.value}save();toast("Date enregistrée");return}
+    if(k==="tete"||k==="grimper")e.permis.dates[k]=t.value;else{(e.permis.dates[k]=e.permis.dates[k]||{})[+e.permis[k]]=t.value}save();toast("Date enregistrée");return}
   if(t.id==="bPhotoIn"){const f=t.files[0];if(!f)return;try{const f2=readBlocForm();BE.photo=await compressSmall(f);drawBlocEdit(f2)}catch(e){toast(e.message||"Photo illisible")}}
   if(t.id==="blocsIn"){const fs=[...t.files];if(!fs.length)return;toast(`Préparation de ${fs.length} photo${fs.length>1?"s":""}…`);let n=0;
     for(const f of fs){try{const img=await compressSmall(f);const base=f.name.replace(/\.[^.]+$/,"").trim();
@@ -1121,7 +1123,7 @@ function importClasses(sheets){
       const cn=(forced||(idx.classe!=null?String(r[idx.classe]||"").trim():"")||(generic(sh.name)?"Classe importée":sh.name)).trim();
       let c=S.classes.find(x=>norm(x.nom)===norm(cn));if(!c){c={id:uid(),nom:cn,eleves:[]};S.classes.push(c)}
       touched.add(c.id);
-      if(!c.eleves.some(e=>norm(e.nom)===norm(nom)&&norm(e.prenom)===norm(prenom))){c.eleves.push({id:uid(),nom,prenom,permis:{grimper:0,assurer:0,tete:false,dates:{grimper:{},assurer:{}}}});nE++}}}
+      if(!c.eleves.some(e=>norm(e.nom)===norm(nom)&&norm(e.prenom)===norm(prenom))){c.eleves.push({id:uid(),nom,prenom,permis:{grimper:false,assurer:0,tete:false,dates:{assurer:{}}}});nE++}}}
   if(!touched.size)throw new Error("Colonnes introuvables : il faut au moins Nom et Prénom (ou une colonne Élève).");
   dropDemo();S.classeId=[...touched][0];S.tab="eleves";save();render();toast(`${nE} élèves importés dans ${touched.size} classe${touched.size>1?"s":""}`);
 }

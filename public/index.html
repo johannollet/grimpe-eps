@@ -318,7 +318,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="11 · progrès & badges";
+const APP_VERSION="11.1 · hauteur du mur";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -345,6 +345,10 @@ function demoPlan(voies,pos){
   [...new Set(voies.map(v=>v.corde))].forEach((c,i,a)=>{pos["c:"+c]={[pid]:{x:+(100*(i+0.5)/a.length).toFixed(1),y:55}}});
   return {id:pid,nom:"Mur (schéma)",img:null,ratio:1.7};
 }
+function murFix(){if(!S.reglages.mur){S.reglages.mur={hauteur:7,premiere:3,ecart:1};(S.voies||[]).forEach(v=>{if(!v.hauteur)v.hauteur="7"})}}
+const mur=()=>Object.assign({hauteur:7,premiere:3,ecart:1},S.reglages.mur||{});
+function limite(l){const m=mur();const fr=n=>String(n).replace(".",",");
+  return ["",`jusqu'à la 1re dégaine (${fr(m.premiere)} m) en dalle ou mur vertical`,`jusqu'à la 2e dégaine (${fr(+m.premiere+ +m.ecart)} m) en dalle ou mur vertical`,`jusqu'en haut (${fr(m.hauteur)} m) en dalle ou mur vertical`,"partout, y compris dans le dévers"][l]||""}
 function fixReg(r){r=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},r||{});r.progres=Object.assign({on:true,premiere:20,record:15,premierBloc:10,recordBloc:10},r.progres||{});return r}
 function migrate(){
   S.plans=S.plans||[];S.pos=S.pos||{};S.blocs=S.blocs||[];S.blocPass=S.blocPass||[];
@@ -359,7 +363,7 @@ function migrate(){
 S=load()||demo();
 migrate();
 if(S.demo&&(!S.plans.length||!S.voies.some(v=>v.corde))){S.pos={};S.plans=[demoPlan(S.voies,S.pos)]}
-S.reglages=fixReg(S.reglages);
+S.reglages=fixReg(S.reglages);murFix();
 
 /* ---------- cotations & points ---------- */
 function cotIndex(c){const m=norm(c).replace(/\s/g,"").match(/^([3-9])([abc])?(\+)?/);if(!m)return -1;return (m[1]-3)*6+({a:0,b:2,c:4}[m[2]||"a"])+(m[3]?1:0)}
@@ -564,7 +568,7 @@ function drawPassage(e){
   const w=[];if(!e.permis.grimper)w.push("Cet élève n'a pas encore son permis grimper.");
   if(draft.mode==="tete"&&!e.permis.tete)w.push("Pas de permis tête validé.");
   const a=draft.assureurId?eleveById(draft.assureurId):null;const al=a?+a.permis.assurer||0:0;
-  if(a&&!al)w.push(`${fullName(a)} n'a pas de foulard assureur : il ne peut pas assurer.`);else if(a&&al<4)w.push(`${fullName(a)} (foulard ${FOUL[al].n}) assure ${LIMITE[al]}.`);
+  if(a&&!al)w.push(`${fullName(a)} n'a pas de foulard assureur : il ne peut pas assurer.`);else if(a&&al<4)w.push(`${fullName(a)} (foulard ${FOUL[al].n}) assure ${limite(al)}.`);
   const prev=v?passPts({mode:draft.mode,res:draft.res},v):0;
   const pp=plansAvecVoies(true);
   const view=pp.length?(S.voieView||"plan"):"liste";
@@ -648,7 +652,7 @@ function openEleve(eid){
     <p class="sub" style="margin:4px 0 0">${s.pts} pts · ${s.reussies} voies enchaînées · niveau max <b>${esc(s.maxC)}</b>${s.blocs?` · ${s.blocs} bloc${s.blocs>1?"s":""}`:""} · ${s.assure} assurages</p>
     <div class="lab">Permis grimper</div>${pSwitch(e,"grimper")}
     <div class="lab">Badges · ${badgesOf(e).length}/${BADGES.length}</div>${badgesHTML(e,true)}
-    <div class="lab">Foulard assureur</div>${fSel(e,"assurer")}<p class="sub" style="margin:6px 0 0">${e.permis.assurer?`Peut assurer ${LIMITE[e.permis.assurer]}.`:"Pas encore de foulard : ne peut pas assurer."} ${hist("assurer")}</p>
+    <div class="lab">Foulard assureur</div>${fSel(e,"assurer")}<p class="sub" style="margin:6px 0 0">${e.permis.assurer?`Peut assurer ${limite(e.permis.assurer)}.`:"Pas encore de foulard : ne peut pas assurer."} ${hist("assurer")}</p>
     <div class="lab">Permis tête</div>${pSwitch(e,"tete")}
     <div class="form" style="margin-top:14px"><label>Nom<input type="text" id="eNom" value="${esc(e.nom)}"></label><label>Prénom<input type="text" id="eP" value="${esc(e.prenom)}"></label><button class="btn" data-act="renel" data-id="${e.id}">Enregistrer le nom</button></div>
     <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><button class="btn" data-act="carnet" data-id="${e.id}" style="margin-left:auto">Carnet</button><button class="btn pri" data-act="notereleve" data-id="${e.id}">Noter un passage</button></div>
@@ -863,6 +867,10 @@ function vVoies(){
   const ev=editVoie?voieById(editVoie):null;
   const opts=Object.keys(COULEURS).map(k=>`<option value="${k}">`).join("");
   return `<h2>Voies du mur</h2><p class="sub">${S.voies.length} voies · désactivez une voie démontée sans perdre l'historique. Points de base : 3a = 10, puis +3 par demi-cotation (4a = 28, 5a = 46, 6a = 64). Les voies d'une même corde partagent un seul repère sur le plan.</p>
+  <div class="panel" style="margin-bottom:14px"><h3>Mon mur</h3>
+    <div class="form"><label>Hauteur des voies (m)<input type="number" step="0.5" id="mH" value="${mur().hauteur}"></label><label>1re dégaine (m)<input type="number" step="0.5" id="mP" value="${mur().premiere}"></label><label>Écart entre dégaines (m)<input type="number" step="0.5" id="mE" value="${mur().ecart}"></label></div>
+    <p>Dégaines à ${(()=>{const m=mur();const a=[];for(let h=+m.premiere;h<+m.hauteur&&a.length<12;h+= +m.ecart||1)a.push(String(h).replace(".",","));return a.join(", ")})()} m. Ces repères s'affichent avec les foulards assureur.</p>
+    <div class="row"><button class="btn" data-act="savemur">Enregistrer</button><button class="btn ghost" data-act="murall">Appliquer la hauteur à toutes les voies</button></div></div>
   <div class="tbl"><table><thead><tr><th>N°</th><th>Couleur</th><th>Cotation</th><th>Pts</th><th>Corde</th><th>Secteur</th><th>Hauteur</th><th>Réussites</th><th>Plan</th><th>Active</th><th></th></tr></thead><tbody>${tr||'<tr><td colspan="11">Aucune voie. Importez-les dans Données.</td></tr>'}</tbody></table></div>
   <div class="lab" style="margin-top:18px">${ev?"Modifier la voie n°"+esc(ev.num):"Ajouter une voie"}</div>
   <datalist id="cols">${opts}</datalist>
@@ -1021,6 +1029,8 @@ document.addEventListener("click",ev=>{
   const c=classe();
   switch(a){
     case "close":closeModal();break;
+    case "savemur":{S.reglages.mur={hauteur:+$("#mH").value||7,premiere:+$("#mP").value||3,ecart:+$("#mE").value||1};save();render();toast("Mur enregistré");break}
+    case "murall":{const h=+$("#mH").value||mur().hauteur;S.reglages.mur=Object.assign(mur(),{hauteur:h});S.voies.forEach(v=>v.hauteur=String(h));save();render();toast(`Toutes les voies font maintenant ${h} m`);break}
     case "pkind":draft.kind=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
     case "bview":S.blocView=t.dataset.v;saveLocal();drawPassage(eleveById(draft.eleveId));break;
     case "pickbloc":if(draft){draft.blocId=id;drawPassage(eleveById(draft.eleveId))}break;
@@ -1173,7 +1183,7 @@ $("#main").addEventListener("change",async ev=>{
     return}
   if(ev.target.id!=="fileIn")return;const f=ev.target.files[0];if(!f)return;
   try{
-    if(pickTarget==="restore"){const d=JSON.parse(await f.text());if(!d.classes||!d.voies)throw new Error("Ce fichier n'est pas une sauvegarde Grimpe EPS.");S=d;migrate();S.reglages=fixReg(S.reglages);planSel=null;save();render();toast("Sauvegarde restaurée");return}
+    if(pickTarget==="restore"){const d=JSON.parse(await f.text());if(!d.classes||!d.voies)throw new Error("Ce fichier n'est pas une sauvegarde Grimpe EPS.");S=d;migrate();S.reglages=fixReg(S.reglages);murFix();planSel=null;save();render();toast("Sauvegarde restaurée");return}
     const sheets=await readTable(f);
     if(pickTarget==="classes")importClasses(sheets);else importVoies(sheets);
   }catch(e){toast(e.message||"Import impossible")}
@@ -1261,7 +1271,7 @@ function persistSY(){const o={code:SY.code,codeLen:SY.codeLen,cfg:SY.cfg,unlocke
   catch(e){try{localStorage.setItem(SK,JSON.stringify(Object.assign({etag:null,base:null},o)))}catch(_){}}}
 function payload(){const o={};for(const k in S)if(!LOCAL_KEYS.includes(k))o[k]=S[k];return JSON.parse(JSON.stringify(o))}
 function applyRemote(data){const keep={};LOCAL_KEYS.forEach(k=>{if(k in S)keep[k]=S[k]});S=Object.assign({},JSON.parse(JSON.stringify(data)),keep);
-  migrate();S.reglages=fixReg(S.reglages);saveLocal()}
+  migrate();S.reglages=fixReg(S.reglages);murFix();saveLocal()}
 const isObj=x=>!!x&&typeof x==="object"&&!Array.isArray(x);
 const idArr=a=>Array.isArray(a)&&a.every(x=>isObj(x)&&typeof x.id==="string");
 const same=(a,b)=>a===b||JSON.stringify(a)===JSON.stringify(b);

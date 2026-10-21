@@ -150,6 +150,27 @@ button.ck{cursor:pointer}
 .rcard.wait{background:var(--surface2);color:var(--muted);border-style:dashed;border-color:var(--line)}
 .rcard.land{animation:pop .55s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{0%{transform:scale(.88)}100%{transform:scale(1)}}
+.spinbtn{position:relative;display:flex;align-items:center;gap:16px;width:100%;max-width:480px;border:0;border-radius:999px;padding:10px 28px 10px 10px;cursor:pointer;
+  background:linear-gradient(180deg,#ff8a50 0%,#e2522f 55%,#c63f22 100%);color:#fff;text-align:left;
+  font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:.8px;text-transform:uppercase;line-height:1;
+  box-shadow:0 6px 0 #922c16,0 12px 24px rgba(217,72,43,.35);transition:transform .08s,box-shadow .08s;-webkit-tap-highlight-color:transparent}
+.spinbtn .lbl{display:flex;flex-direction:column;gap:4px;text-shadow:0 2px 0 rgba(0,0,0,.18)}
+.spinbtn .lbl small{font-family:var(--body);font-size:14px;font-weight:700;letter-spacing:0;text-transform:none;opacity:.9;text-shadow:none}
+.spinbtn .wheel{position:relative;width:70px;height:70px;flex:none;border-radius:50%;background:#fff;padding:3px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.spinbtn .wheel svg{width:100%;height:100%;display:block}
+.spinbtn .wheel .rot{transform-origin:50px 50px;transform-box:view-box}
+.spinbtn .needle{position:absolute;left:50%;top:-6px;width:0;height:0;margin-left:-7px;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #1b2320;filter:drop-shadow(0 1px 0 #fff)}
+.spinbtn:not(:disabled):not(.spinning){animation:pulse 2.4s ease-in-out infinite}
+.spinbtn:not(:disabled):not(.spinning) .rot{animation:whirl 7s linear infinite}
+.spinbtn.spinning .rot{animation:whirl .4s linear infinite}
+.spinbtn:hover:not(:disabled){filter:brightness(1.06)}
+.spinbtn:active:not(:disabled){transform:translateY(5px);box-shadow:0 1px 0 #922c16,0 4px 10px rgba(217,72,43,.3);animation:none}
+.spinbtn:disabled{cursor:default}
+.spinbtn:disabled:not(.spinning){filter:grayscale(.85);opacity:.55}
+@keyframes whirl{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{box-shadow:0 6px 0 #922c16,0 12px 24px rgba(217,72,43,.35),0 0 0 0 rgba(226,82,47,.35)}50%{box-shadow:0 6px 0 #922c16,0 12px 24px rgba(217,72,43,.35),0 0 0 10px rgba(226,82,47,0)}}
+@media (max-width:420px){.spinbtn{font-size:23px;gap:12px;padding-right:18px}.spinbtn .wheel{width:60px;height:60px}}
+@media (prefers-reduced-motion:reduce){.spinbtn,.spinbtn .rot{animation:none!important}}
 .btn.big{font-size:19px;padding:14px 26px;font-family:var(--display);letter-spacing:.5px;text-transform:uppercase}
 .stage{display:flex;flex-direction:column;gap:12px;margin-top:14px}
 @media (prefers-reduced-motion:reduce){.rcard.land{animation:none}}
@@ -210,7 +231,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="7 · roulette";
+const APP_VERSION="7.1 · roulette";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -402,7 +423,7 @@ function rPlan(c){
   const best=[...S.plans].sort((a,b)=>score(b)-score(a))[0];
   return best&&score(best)?best:null;
 }
-function stageHTML(){
+function stageHTML(part){
   const c=rCandidats();const v=RL.cur;const e=RL.eleveId?eleveById(RL.eleveId):null;
   let card;
   if(!v)card=`<div class="rcard wait"><span class="big">?</span><span class="meta">${RL.niv?`${c.length} voie${c.length>1?"s":""} possible${c.length>1?"s":""}`:"Choisissez d'abord un niveau"}<small>${RL.niv?"Lancez la roulette !":""}</small></span></div>`;
@@ -412,10 +433,22 @@ function stageHTML(){
   const plans=S.plans.filter(p=>c.some(x=>placedOn(itemOf(x),p.id)));
   const chips=plans.length>1&&!RL.spin?`<div class="chips">${plans.map(p=>`<button class="chip" data-act="rplan" data-id="${p.id}" aria-pressed="${pl&&p.id===pl.id}">${esc(p.nom)}</button>`).join("")}</div>`:"";
   const fin=!RL.spin&&RL.res;
-  const btns=`<div class="row"><button class="btn pri big" data-act="spin" ${RL.spin||!c.length?"disabled":""}>${RL.spin?"Ça tourne…":RL.res?"Relancer":"Lancer la roulette"}</button>${fin&&e?`<button class="btn" data-act="rnoter">Noter le passage</button>`:""}${fin&&!e?`<span class="sub" style="margin:0">Choisissez l'élève pour noter le passage directement.</span>`:""}</div>`;
-  return btns+card+chips+(pl?planHTML(pl,{ctx:"view",sel:v?v.id:null,only:new Set(c.map(x=>x.id))}):"");
+  const show=card+chips+(pl?planHTML(pl,{ctx:"view",sel:v?v.id:null,only:new Set(c.map(x=>x.id))}):"");
+  if(part==="show")return show;
+  const btns=`<div id="rBtns" class="stage" style="margin:0">${spinBtnHTML(c)}${fin&&e?`<div class="row"><button class="btn pri" data-act="rnoter">Noter le passage de ${esc(e.prenom)}</button></div>`:""}${fin&&!e?`<p class="sub" style="margin:0">Choisissez l'élève en haut pour noter le passage directement.</p>`:""}</div>`;
+  return btns+`<div id="rShow" class="stage" style="margin:0">${show}</div>`;
 }
-function drawStage(){const el=$("#rStage");if(el)el.innerHTML=stageHTML()}
+let WHEEL="";
+function wheelSVG(){if(WHEEL)return WHEEL;const cols=["#f2c624","#2f9e4f","#7b46c2","#2a9fe0","#d7372b","#1e1e1e","#8a8f8c","#ef7d1a"];const n=cols.length;let p="";
+  for(let i=0;i<n;i++){const a0=(i/n)*2*Math.PI-Math.PI/2,a1=((i+1)/n)*2*Math.PI-Math.PI/2;
+    p+=`<path d="M50 50 L${(50+48*Math.cos(a0)).toFixed(2)} ${(50+48*Math.sin(a0)).toFixed(2)} A48 48 0 0 1 ${(50+48*Math.cos(a1)).toFixed(2)} ${(50+48*Math.sin(a1)).toFixed(2)} Z" fill="${cols[i]}" stroke="#fff" stroke-width="2"/>`}
+  return WHEEL=`<svg viewBox="0 0 100 100"><g class="rot">${p}<circle cx="50" cy="50" r="11" fill="#fff"/><circle cx="50" cy="50" r="5" fill="#1b2320"/></g></svg>`}
+function spinBtnHTML(c){
+  const lab=RL.spin?"Ça tourne…":RL.res?"Relancer !":"Lancer la roulette";
+  const sub=RL.spin?"Croisez les doigts…":c.length?`${c.length} voie${c.length>1?"s":""} en jeu`:RL.niv?"aucune voie à ce niveau":"choisissez un niveau";
+  return `<button class="spinbtn ${RL.spin?"spinning":""}" data-act="spin" ${RL.spin||!c.length?"disabled":""}><span class="wheel" aria-hidden="true">${wheelSVG()}<i class="needle"></i></span><span class="lbl">${lab}<small>${sub}</small></span></button>`;
+}
+function drawStage(part){if(part==="show"){const el=$("#rShow");if(el){el.innerHTML=stageHTML("show");return}}const el=$("#rStage");if(el)el.innerHTML=stageHTML()}
 function vRoulette(){
   const c=classe();if(RL.eleveId&&!(c&&c.eleves.some(e=>e.id===RL.eleveId))){RL.eleveId="";RL.res=RL.cur=null}
   const cots=[...new Set(S.voies.filter(v=>v.active).map(v=>v.cotation.trim()))].sort((a,b)=>cotIndex(a)-cotIndex(b)||a.localeCompare(b));
@@ -437,7 +470,8 @@ function spin(){
   for(let i=0;i<n-1;i++){let x;do{x=c[Math.floor(Math.random()*c.length)]}while(c.length>1&&x===prev);seq.push(x);prev=x}
   if(seq.length&&seq[seq.length-1]===RL.res&&c.length>1)seq.pop();
   seq.push(RL.res);RL.spin=true;let i=0,d=40;
-  (function tick(){RL.cur=seq[i];i++;if(i>=seq.length)RL.spin=false;drawStage();if(i<seq.length){d=Math.min(d*1.13,420);setTimeout(tick,d)}})();
+  drawStage();
+  (function tick(){RL.cur=seq[i];i++;if(i>=seq.length){RL.spin=false;drawStage()}else drawStage("show");if(i<seq.length){d=Math.min(d*1.13,420);setTimeout(tick,d)}})();
 }
 
 /* ---------- meilleurs grimpeurs ---------- */

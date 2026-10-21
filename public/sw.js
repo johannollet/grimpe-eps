@@ -1,11 +1,11 @@
-const C="grimpe-eps-v5";
+const C="grimpe-eps-v6";
 const F=["./","index.html","manifest.json","icon-192.png","icon-512.png","icon-180.png","modele_classes.xlsx","modele_voies.xlsx"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F.map(u=>new Request(u,{cache:"reload"})))).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 function putCache(req,res){if(res&&res.ok){const cp=res.clone();caches.open(C).then(c=>c.put(req,cp))}return res}
 self.addEventListener("fetch",e=>{
   const req=e.request;if(req.method!=="GET")return;
-  const url=new URL(req.url);const same=url.origin===location.origin;
+  const url=new URL(req.url);const same=url.origin===location.origin;if(url.pathname.startsWith("/api/"))return;
   const isPage=req.mode==="navigate"||(same&&(url.pathname==="/"||url.pathname.endsWith(".html")));
   if(isPage){
     // Page : toujours la version en ligne si le réseau répond (3 s max), sinon la copie hors ligne.

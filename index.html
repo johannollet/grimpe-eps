@@ -167,6 +167,7 @@ button.ck{cursor:pointer}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
+const APP_VERSION="5 · plans multiples";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -448,7 +449,7 @@ function nextUnplaced(after){const ids=placeItems().map(it=>it.id);const i=ids.i
 
 function vDonnees(){
   const inFrame=(()=>{try{return window.top!==window}catch(e){return true}})();
-  return `<h2>Données</h2><p class="sub">Tout est enregistré sur cet appareil, sans connexion. Faites une sauvegarde régulière pour passer d'une tablette à l'autre.</p>
+  return `<h2>Données</h2><p class="sub">Tout est enregistré sur cet appareil, sans connexion. Faites une sauvegarde régulière pour passer d'une tablette à l'autre. <b>Version ${APP_VERSION}</b></p>
   ${inFrame?`<div class="notice">Dans l'aperçu Claude, les téléchargements (modèles, exports, sauvegarde) sont bloqués. Ils fonctionnent dans la version installée sur Netlify.</div>`:""}
   <div class="panels">
     <div class="panel"><h3>Importer des classes</h3>
@@ -642,7 +643,10 @@ function dropDemo(){if(S.demo){S.classes=[];S.voies=[];S.passages=[];S.plans=[];
 
 /* ---------- démarrage ---------- */
 render();
-try{if("serviceWorker" in navigator&&location.protocol==="https:"&&window.top===window&&document.querySelector('link[rel="manifest"]'))navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(e){}
+try{if("serviceWorker" in navigator&&location.protocol==="https:"&&window.top===window&&document.querySelector('link[rel="manifest"]')){
+  const had=!!navigator.serviceWorker.controller;let reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{})}}catch(e){}
 </script>
 
 </body></html>

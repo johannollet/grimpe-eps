@@ -103,7 +103,7 @@ code{font-size:13px;background:var(--surface2);padding:1px 5px;border-radius:4px
 input[type=text],input[type=number],select.in{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:end}
 .form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:700}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:30;font-weight:700;max-width:90vw}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:30;font-weight:700;max-width:90vw}
 .sw{width:42px;height:24px;border-radius:99px;border:0;background:var(--line);position:relative}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
 .sw[aria-checked="true"]{background:var(--ok)}
@@ -133,6 +133,28 @@ button.ck{cursor:pointer}
 .ck.off{opacity:.45;border-style:dashed}
 .chip .dots{display:inline-flex;gap:2px}.chip .dots i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.bk{position:absolute;transform:translate(-50%,-50%);background:var(--ink);color:var(--bg);border:2px solid #fff;border-radius:5px;padding:3px 6px 2px;box-shadow:0 1px 5px rgba(0,0,0,.6);font-family:var(--display);font-weight:800;font-size:14px;line-height:1;white-space:nowrap;display:flex;flex-direction:column;align-items:center}
+button.bk{cursor:pointer}
+.bk small{font-size:9px;color:var(--gold);letter-spacing:-1px}
+.bk.sel{outline:3px solid var(--accent);outline-offset:2px;z-index:3}
+.bk.done::after{content:"✓";position:absolute;right:-8px;top:-8px;background:var(--ok);color:#fff;border:2px solid #fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:grid;place-items:center;font-family:var(--body)}
+.bk.faded,.bk.off{opacity:.35}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.bcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;text-align:left;padding:0;min-width:0}
+.bcard:hover{border-color:var(--accent)}
+.bcard .ph{aspect-ratio:4/3;width:100%;max-width:100%;background:var(--surface2);display:grid;place-items:center;overflow:hidden;color:var(--muted);font-family:var(--display);font-weight:800;font-size:30px}
+.bcard .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.bcard .bd{padding:8px 10px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.bcard .bd b{font-family:var(--display);font-size:20px;line-height:1}
+.bcard .st{color:var(--gold);letter-spacing:-1px}
+.bcard .df{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bcard.done{border-color:var(--ok);box-shadow:inset 0 0 0 2px var(--ok)}
+.bcard[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:2px}
+.bcard.off{opacity:.5}
+.bphoto{width:100%;max-width:100%;max-height:55vh;object-fit:contain;border-radius:var(--r);background:var(--surface2);display:block}
+.defi{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:8px;padding:10px 12px;font-size:16px}
+textarea.in{width:100%;min-height:70px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font:inherit;color:inherit;resize:vertical}
+@container (max-width:640px){.bk{font-size:clamp(10px,2.7cqw,14px);padding:2px 4px 1px}.bk small{font-size:clamp(7px,1.8cqw,9px)}}
 .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 10px;font-size:13px;font-weight:700;color:var(--muted);flex:none}
 .pill i{width:9px;height:9px;border-radius:50%;background:var(--muted)}
 .pill.ok i{background:var(--ok)}.pill.busy i{background:var(--warn);animation:blink 1s infinite}.pill.off i{background:var(--muted)}.pill.err i{background:var(--bad)}
@@ -141,6 +163,7 @@ button.ck{cursor:pointer}
 .iconbtn svg{width:20px;height:20px}
 @media (max-width:560px){.pill span{display:none}.pill{padding:10px}}
 #lock{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
+#lock[hidden],[hidden]{display:none!important}
 .lockbox{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
 .lockbox h2{font-size:30px;margin:0}
 .codedots{display:flex;gap:12px;height:22px;align-items:center}
@@ -242,6 +265,7 @@ body.tv .notice{display:none}
     <button data-tab="top" role="tab">Meilleurs grimpeurs</button>
     <button data-tab="eleves" role="tab">Élèves &amp; permis</button>
     <button data-tab="voies" role="tab">Voies</button>
+    <button data-tab="blocs" role="tab">Blocs</button>
     <button data-tab="plan" role="tab">Plan du mur</button>
     <button data-tab="donnees" role="tab">Données</button>
   </nav>
@@ -254,7 +278,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="8 · synchronisation";
+const APP_VERSION="9 · blocs";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -282,7 +306,7 @@ function demoPlan(voies,pos){
   return {id:pid,nom:"Mur (schéma)",img:null,ratio:1.7};
 }
 function migrate(){
-  S.plans=S.plans||[];S.pos=S.pos||{};
+  S.plans=S.plans||[];S.pos=S.pos||{};S.blocs=S.blocs||[];S.blocPass=S.blocPass||[];
   if(S.cordes){for(const k in S.cordes){const c=S.cordes[k];if(c&&c.plan)(S.pos["c:"+k]=S.pos["c:"+k]||{})[c.plan]={x:c.x,y:c.y}}delete S.cordes}
   (S.voies||[]).forEach(v=>{if(v.pos&&v.pos.plan)(S.pos[v.id]=S.pos[v.id]||{})[v.pos.plan]={x:v.pos.x,y:v.pos.y};delete v.pos});
 }
@@ -314,8 +338,15 @@ function stats(e,since){
   const tete=new Set(oks.filter(p=>p.mode==="tete").map(p=>p.voieId)).size;
   const hauteur=oks.reduce((a,p)=>a+(+(voieById(p.voieId)||{}).hauteur||0),0);
   const assure=S.passages.filter(p=>p.assureurId===e.id&&(!since||p.date>=since)).length;
-  return {pts,reussies,maxI,maxC,tete,hauteur,assure,essais:ps.length}
+  const bp=(S.blocPass||[]).filter(p=>p.eleveId===e.id&&(!since||p.date>=since));
+  const bok=[...new Set(bp.filter(p=>p.res==="ok").map(p=>p.blocId))].map(blocById).filter(Boolean);
+  const bPts=bok.reduce((a,b)=>a+blocPts(b),0);const blocMax=bok.reduce((a,b)=>Math.max(a,+b.niveau||1),0);
+  return {pts:pts+bPts,ptsVoies:pts,blocPts:bPts,blocs:bok.length,blocMax,reussies,maxI,maxC,tete,hauteur,assure,essais:ps.length+bp.length}
 }
+const blocById=id=>(S.blocs||[]).find(b=>b.id===id);
+const blocPts=b=>b&&b.pts!==""&&b.pts!=null&&!isNaN(+b.pts)?+b.pts:10+10*(+b.niveau||1);
+const etoiles=n=>"★".repeat(+n||1);
+const sortedBlocs=()=>[...(S.blocs||[])].sort((a,b)=>(+a.niveau||1)-(+b.niveau||1)||String(a.nom).localeCompare(String(b.nom),"fr",{numeric:true}));
 
 /* ---------- rendu ---------- */
 const $=s=>document.querySelector(s);
@@ -333,7 +364,7 @@ function render(){
   if(!classe()&&S.classes[0])S.classeId=S.classes[0].id;
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===S.tab));
   const demoBar=S.demo?`<div class="notice"><span><b>Données d'exemple.</b> Importez vos classes et vos voies dans l'onglet Données.</span><button class="btn sm" data-act="cleardemo">Effacer l'exemple</button></div>`:"";
-  $("#main").innerHTML=demoBar+({seance:vSeance,roulette:vRoulette,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
+  $("#main").innerHTML=demoBar+({seance:vSeance,roulette:vRoulette,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,blocs:vBlocs,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
 }
 
 function vSeance(){
@@ -343,10 +374,11 @@ function vSeance(){
     <span class="nm">${esc(e.prenom)}<small>${esc(e.nom)}</small></span>${pmBadges(e)}
     <span class="st"><span class="pts">${s.pts}<small> pts</small></span><span class="lvl" title="Meilleure voie enchaînée">${esc(s.maxC)}</span></span></button>`}).join("");
   const ids=new Set(c.eleves.map(e=>e.id));
-  const recent=S.passages.filter(p=>ids.has(p.eleveId)&&p.date.slice(0,10)===today()).slice(-12).reverse();
-  const rl=recent.length?recent.map(p=>{const v=voieById(p.voieId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · ${v?hold(v)+" "+esc(v.cotation):"voie supprimée"} · ${p.mode==="tete"?"en tête":"moulinette"}${p.assureurId?" · assuré par "+esc(fullName(eleveById(p.assureurId))):""}</span>
+  const recent=S.passages.concat((S.blocPass||[]).map(p=>Object.assign({bloc:true},p))).filter(p=>ids.has(p.eleveId)&&p.date.slice(0,10)===today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(-12).reverse();
+  const rl=recent.length?recent.map(p=>{if(p.bloc){const b=blocById(p.blocId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · bloc <b>${b?esc(b.nom):"supprimé"}</b> <span style="color:var(--gold)">${b?etoiles(b.niveau):""}</span></span><span class="tag ${p.res==="ok"?"ok":"ko"}">${p.res==="ok"?"Réussi":"Pas encore"}</span><span class="tag">+${p.res==="ok"&&b?blocPts(b):0}</span><button class="btn sm ghost" data-act="delbp" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}
+    const v=voieById(p.voieId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · ${v?hold(v)+" "+esc(v.cotation):"voie supprimée"} · ${p.mode==="tete"?"en tête":"moulinette"}${p.assureurId?" · assuré par "+esc(fullName(eleveById(p.assureurId))):""}</span>
     <span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":"Non finie"}</span><span class="tag">+${passPts(p,v)}</span><button class="btn sm ghost" data-act="delpass" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}).join(""):`<div class="empty">Aucun passage aujourd'hui. Touchez un élève pour noter une voie.</div>`;
-  return `<h2>Séance · ${esc(c.nom)}</h2><p class="sub">Touchez un élève pour enregistrer une voie. G = permis grimper, A = assurer, T = tête.</p>
+  return `<h2>Séance · ${esc(c.nom)}</h2><p class="sub">Touchez un élève pour enregistrer une voie ou un bloc. G = permis grimper, A = assurer, T = tête.</p>
   <div class="grid">${cards||'<div class="empty">Classe vide.</div>'}</div>
   <div class="lab" style="margin-top:22px">Passages du jour</div><div class="list">${rl}</div>`;
 }
@@ -354,7 +386,36 @@ function vSeance(){
 let draft=null;
 function openPassage(eid){
   const e=eleveById(eid);draft={eleveId:eid,voieId:null,corde:"",mode:"moul",res:"ok",assureurId:"",secteur:""};drawPassage(e)}
+function kindSeg(){if(!(S.blocs||[]).some(b=>b.active))return "";const k=draft.kind||"voie";
+  return `<div class="seg" style="margin-top:10px"><button data-act="pkind" data-v="voie" aria-pressed="${k==="voie"}">Voie</button><button data-act="pkind" data-v="bloc" aria-pressed="${k==="bloc"}">Bloc</button></div>`}
+function drawBlocPassage(e){
+  const doneB=new Set(S.blocPass.filter(p=>p.eleveId===e.id&&p.res==="ok").map(p=>p.blocId));
+  const bs=sortedBlocs().filter(b=>b.active);
+  const pp=S.plans.filter(p=>bs.some(b=>placedOn("b:"+b.id,p.id)));
+  const view=pp.length?(S.blocView||"liste"):"liste";const b=draft.blocId?blocById(draft.blocId):null;
+  let choix;
+  if(view==="plan"){const pl=pp.find(p=>p.id===draft.planId)||pp.find(p=>b&&placedOn("b:"+b.id,p.id))||pp[0];draft.planId=pl.id;
+    choix=`${pp.length>1?`<div class="chips" style="margin-bottom:8px">${pp.map(p=>`<button class="chip" data-act="pplan" data-id="${p.id}" aria-pressed="${p.id===pl.id}">${esc(p.nom)}</button>`).join("")}</div>`:""}${planHTML(pl,{ctx:"pickb",kinds:"blocs",sel:b?"b:"+b.id:null,doneB,onlyActive:true})}`}
+  else choix=`<div class="bgrid">${bs.map(x=>blocCard(x,"pickbloc",doneB,draft.blocId)).join("")||'<div class="empty">Aucun bloc actif.</div>'}</div>`;
+  const oldTop=$("#modal .sheet")?.scrollTop||0;
+  $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Nouveau bloc">
+    <div class="row"><h3>${esc(fullName(e))}</h3><span style="margin-left:auto">${pmBadges(e)}</span></div>${kindSeg()}
+    <div class="row" style="margin:14px 0 6px"><span class="lab" style="margin:0">Bloc</span>${pp.length?`<span class="seg" style="margin-left:auto"><button data-act="bview" data-v="plan" aria-pressed="${view==="plan"}">Plan</button><button data-act="bview" data-v="liste" aria-pressed="${view==="liste"}">Photos</button></span>`:""}</div>
+    ${choix}
+    ${b?`<div class="stage">${b.photo?`<img class="bphoto" src="${b.photo}" alt="Bloc ${esc(b.nom)}">`:""}${b.defi?`<div class="defi"><b>Défi :</b> ${esc(b.defi)}</div>`:""}</div>`:""}
+    <div class="lab">Résultat</div><div class="seg"><button data-act="bres" data-v="ok" aria-pressed="${(draft.bres||"ok")==="ok"}">Réussi</button><button data-act="bres" data-v="echec" aria-pressed="${draft.bres==="echec"}">Pas encore</button></div>
+    ${!e.permis.grimper?`<p class="warn">⚠ Cet élève n'a pas encore son permis grimper.</p>`:""}
+    <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><span style="margin-left:auto;color:var(--muted)">${b?`Bloc ${esc(b.nom)} → <b>+${(draft.bres||"ok")==="ok"?blocPts(b):0} pts</b>${doneB.has(b.id)?" (déjà réussi)":""}`:"Choisissez un bloc"}</span><button class="btn pri" data-act="savebp" ${b?"":"disabled"}>Enregistrer</button></div>
+  </div></div>`;
+  $("#modal .sheet").scrollTop=oldTop;
+}
+function blocCard(b,act,doneB,sel){
+  return `<button class="bcard ${doneB&&doneB.has(b.id)?"done":""} ${b.active?"":"off"}" data-act="${act}" data-id="${b.id}" ${sel!==undefined?`aria-pressed="${sel===b.id}"`:""}>
+    <span class="ph">${b.photo?`<img src="${b.photo}" alt="" loading="lazy">`:esc(b.nom)}</span>
+    <span class="bd"><b>${esc(b.nom)}${doneB&&doneB.has(b.id)?' <span style="color:var(--ok)">✓</span>':""}</b><span class="st">${etoiles(b.niveau)}</span>${b.defi?`<span class="df">${esc(b.defi)}</span>`:""}</span></button>`;
+}
 function drawPassage(e){
+  if(draft.kind==="bloc")return drawBlocPassage(e);
   const c=classe();const done=new Set(S.passages.filter(p=>p.eleveId===e.id&&p.res==="ok").map(p=>p.voieId));
   const secteurs=[...new Set(S.voies.filter(v=>v.active).map(v=>v.secteur).filter(Boolean))];
   const vs=sortedVoies().filter(v=>v.active&&(!draft.secteur||v.secteur===draft.secteur));
@@ -379,7 +440,7 @@ function drawPassage(e){
   }
   const oldTop=$("#modal .sheet")?.scrollTop||0;
   $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Nouveau passage">
-    <div class="row"><h3>${esc(fullName(e))}</h3><span style="margin-left:auto">${pmBadges(e)}</span></div>
+    <div class="row"><h3>${esc(fullName(e))}</h3><span style="margin-left:auto">${pmBadges(e)}</span></div>${kindSeg()}
     <div class="row" style="margin:14px 0 6px"><span class="lab" style="margin:0">Voie</span>${pp.length?`<span class="seg" style="margin-left:auto"><button data-act="vview" data-v="plan" aria-pressed="${view==="plan"}">Plan</button><button data-act="vview" data-v="liste" aria-pressed="${view==="liste"}">Liste</button></span>`:""}</div>
     ${choix}
     <div class="lab">Mode</div><div class="seg"><button data-act="mode" data-v="moul" aria-pressed="${draft.mode==="moul"}">Moulinette</button><button data-act="mode" data-v="tete" aria-pressed="${draft.mode==="tete"}">En tête</button></div>
@@ -401,11 +462,11 @@ function vClassement(){
   const c=classe();if(!c)return `<div class="empty">Aucune classe.</div>`;
   const rows=rankingRows(c);const key=S.sortKey||"pts";
   const pod=rows.slice(0,3).map((r,i)=>`<div><div class="p">${i+1}</div><b>${esc(r.e.prenom)}</b><br><span style="color:var(--muted)">${key==="niv"?esc(r.s.maxC):key==="voies"?r.s.reussies+" voies":r.s.pts+" pts"}</span></div>`).join("");
-  const tr=rows.map((r,i)=>`<tr><td class="rank">${i+1}</td><td><b>${esc(r.e.nom)}</b> ${esc(r.e.prenom)}</td><td class="num"><b>${r.s.pts}</b></td><td class="num">${r.s.reussies}</td><td><b>${esc(r.s.maxC)}</b></td><td class="num">${r.s.tete}</td><td class="num">${r.s.assure}</td><td class="num">${r.s.hauteur?r.s.hauteur+" m":"—"}</td><td>${pmBadges(r.e)}</td></tr>`).join("");
+  const tr=rows.map((r,i)=>`<tr><td class="rank">${i+1}</td><td><b>${esc(r.e.nom)}</b> ${esc(r.e.prenom)}</td><td class="num"><b>${r.s.pts}</b></td><td class="num">${r.s.reussies}</td><td><b>${esc(r.s.maxC)}</b></td><td class="num">${r.s.blocs||"—"}</td><td class="num">${r.s.tete}</td><td class="num">${r.s.assure}</td><td class="num">${r.s.hauteur?r.s.hauteur+" m":"—"}</td><td>${pmBadges(r.e)}</td></tr>`).join("");
   return `<h2>Classement · ${esc(c.nom)}</h2><p class="sub">${S.reglages.uneFoisParVoie?"Chaque voie compte une seule fois (meilleur passage).":"Tous les passages comptent."} Points = cotation${S.reglages.bonusTete?`, +${S.reglages.bonusTete} % en tête`:""}, ${S.reglages.repos} % avec repos.</p>
   <div class="row" style="margin-bottom:12px"><span class="seg"><button data-act="sort" data-v="pts" aria-pressed="${key==="pts"}">Points</button><button data-act="sort" data-v="niv" aria-pressed="${key==="niv"}">Niveau max</button><button data-act="sort" data-v="voies" aria-pressed="${key==="voies"}">Voies enchaînées</button></span><button class="btn" data-act="expclass" style="margin-left:auto">Exporter (Excel)</button></div>
   ${rows.length>=3?`<div class="podium">${pod}</div>`:""}
-  <div class="tbl"><table><thead><tr><th>#</th><th>Élève</th><th>Points</th><th>Voies</th><th>Niveau</th><th>Tête</th><th>Assurages</th><th>Hauteur</th><th>Permis</th></tr></thead><tbody>${tr}</tbody></table></div>`;
+  <div class="tbl"><table><thead><tr><th>#</th><th>Élève</th><th>Points</th><th>Voies</th><th>Niveau</th><th>Blocs</th><th>Tête</th><th>Assurages</th><th>Hauteur</th><th>Permis</th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
 
 function vEleves(){
@@ -426,9 +487,59 @@ function openCarnet(eid){
   const carte=pp.length?`<div class="lab">Carte des voies enchaînées</div><div style="display:flex;flex-direction:column;gap:8px">${pp.map(p=>`${pp.length>1?`<b>${esc(p.nom)}</b>`:""}${planHTML(p,{ctx:"view",done,label:"num",fadeUndone:true})}`).join("")}</div>`:"";
   const li=ps.map(p=>{const v=voieById(p.voieId);return `<div class="li"><span class="grow">${v?hold(v)+" <b>"+esc(v.cotation)+"</b>":"voie supprimée"} · ${p.mode==="tete"?"tête":"moulinette"} · ${new Date(p.date).toLocaleDateString("fr-FR")}</span><span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Repos":"Non finie"}</span></div>`}).join("")||`<div class="empty">Aucune voie notée.</div>`;
   $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Carnet de voies"><div class="row"><h3>Carnet · ${esc(fullName(e))}</h3><button class="btn ghost" style="margin-left:auto" data-act="close">Fermer</button></div>
-  <p class="sub">${s.pts} pts · ${s.reussies} voies enchaînées · niveau max <b>${esc(s.maxC)}</b> · ${s.assure} assurages${s.hauteur?" · "+s.hauteur+" m grimpés":""}</p>
+  <p class="sub">${s.pts} pts · ${s.reussies} voies enchaînées · niveau max <b>${esc(s.maxC)}</b>${s.blocs?` · ${s.blocs} bloc${s.blocs>1?"s":""} réussi${s.blocs>1?"s":""} (${s.blocPts} pts)`:""} · ${s.assure} assurages${s.hauteur?" · "+s.hauteur+" m grimpés":""}</p>
   ${carte}<div class="lab">Historique</div><div class="list">${li}</div></div></div>`;
 }
+
+/* ---------- blocs ---------- */
+let BE=null;
+function vBlocs(){
+  const niv=S.blocNiv||"";const c=classe();const ids=c?new Set(c.eleves.map(e=>e.id)):new Set();
+  const nivs=[...new Set(S.blocs.map(b=>+b.niveau||1))].sort((a,b)=>a-b);
+  const bs=sortedBlocs().filter(b=>!niv||(+b.niveau||1)===+niv);
+  const cnt={};S.blocPass.forEach(p=>{if(p.res==="ok"&&ids.has(p.eleveId))(cnt[p.blocId]=cnt[p.blocId]||new Set()).add(p.eleveId)});
+  const cards=bs.map(b=>{const n=cnt[b.id]?cnt[b.id].size:0;return blocCard(b,"openbloc").replace('</span></button>',`<span class="df" style="color:var(--ink)">${n} réussite${n>1?"s":""}${c?" en "+esc(c.nom):""}${plansOf("b:"+b.id).length?"":" · non placé"}</span></span></button>`)}).join("");
+  return `<h2>Blocs</h2><p class="sub">Des défis de bloc identifiés sur le mur : une photo, un niveau en étoiles, une consigne. Les élèves les choisissent en séance (Voie / Bloc) et marquent des points.</p>
+  <div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="newbloc">+ Nouveau bloc</button><button class="btn" data-act="importblocs">Importer des photos…</button>
+    ${nivs.length>1?`<span class="seg" style="margin-left:auto"><button data-act="blocniv" data-v="" aria-pressed="${!niv}">Tous</button>${nivs.map(n=>`<button data-act="blocniv" data-v="${n}" aria-pressed="${+niv===n}">${etoiles(n)}</button>`).join("")}</span>`:""}</div>
+  ${cards?`<div class="bgrid">${cards}</div>`:`<div class="empty">Aucun bloc pour l'instant.<br>Prenez en photo chaque bloc (les prises du défi bien visibles), puis « Importer des photos » : un bloc est créé par photo. Complétez ensuite le niveau et la consigne, et placez-les sur le plan du mur.</div>`}
+  <input type="file" id="blocsIn" hidden accept="image/*" multiple>`;
+}
+function openBloc(id){
+  const b=blocById(id);if(!b)return;const c=classe();
+  const who=c?sortedEleves(c).map(e=>({e,p:S.blocPass.filter(p=>p.eleveId===e.id&&p.blocId===b.id&&p.res==="ok").sort((x,y)=>x.date.localeCompare(y.date))[0]})).filter(x=>x.p):[];
+  const pls=plansOf("b:"+b.id);
+  const opts=c?sortedEleves(c).map(e=>`<option value="${e.id}">${esc(fullName(e))}</option>`).join(""):"";
+  $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Bloc ${esc(b.nom)}">
+    <div class="row"><h3>Bloc ${esc(b.nom)} <span style="color:var(--gold)">${etoiles(b.niveau)}</span></h3><span class="tag" style="margin-left:auto">${blocPts(b)} pts</span>${b.active?"":'<span class="tag">Désactivé</span>'}</div>
+    <div class="stage">${b.photo?`<img class="bphoto" src="${b.photo}" alt="Photo du bloc ${esc(b.nom)}">`:`<div class="empty">Pas de photo.</div>`}
+    <div class="defi"><b>Défi :</b> ${esc(b.defi||"pas encore de consigne.")}</div>${b.couleur?`<p class="sub" style="margin:0">Prises : ${esc(b.couleur)}</p>`:""}</div>
+    ${pls.length?`<div class="lab">Sur le mur</div>${planHTML(pls[0],{ctx:"view",kinds:"blocs",sel:"b:"+b.id})}`:`<p class="sub" style="margin-top:10px">Ce bloc n'est pas encore placé sur le plan du mur.</p>`}
+    ${c?`<div class="lab">Noter un essai</div><div class="row"><select class="in" id="bEl" style="flex:1;min-width:0"><option value="">— Élève de ${esc(c.nom)} —</option>${opts}</select><button class="btn pri" data-act="bnote" data-id="${b.id}" data-r="ok">Réussi</button><button class="btn" data-act="bnote" data-id="${b.id}" data-r="echec">Pas encore</button></div>
+    <div class="lab">Réussi par (${who.length})</div><div class="list">${who.map(x=>`<div class="li"><span class="grow"><b>${esc(fullName(x.e))}</b></span><span class="tag">${new Date(x.p.date).toLocaleDateString("fr-FR")}</span></div>`).join("")||'<p class="sub" style="margin:0">Personne dans cette classe pour l\'instant.</p>'}</div>`:""}
+    <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><button class="btn" data-act="editbloc" data-id="${b.id}" style="margin-left:auto">Modifier</button><button class="btn" data-act="goplace" data-id="b:${b.id}">Placer sur le plan</button></div>
+  </div></div>`;
+}
+function openBlocEdit(id){
+  const b=id?blocById(id):null;BE={id:b?b.id:null,photo:b?b.photo:null};drawBlocEdit(b||{nom:"B"+(S.blocs.length+1),niveau:1,defi:"",couleur:"",pts:"",active:true});
+}
+function drawBlocEdit(b){
+  $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Bloc">
+    <h3>${BE.id?"Modifier le bloc":"Nouveau bloc"}</h3>
+    <div class="stage">${BE.photo?`<img class="bphoto" src="${BE.photo}" alt="" style="max-height:34vh">`:""}<div class="row"><button class="btn" data-act="blocphoto">${BE.photo?"Changer la photo":"Ajouter une photo"}</button>${BE.photo?`<button class="btn ghost" data-act="blocnophoto">Retirer la photo</button>`:""}</div></div>
+    <div class="form" style="margin-top:12px"><label>Nom<input type="text" id="bNom" value="${esc(b.nom)}"></label>
+      <label>Niveau<select class="in" id="bNiv">${[1,2,3,4,5,6].map(n=>`<option value="${n}" ${+b.niveau===n?"selected":""}>${etoiles(n)} (${n})</option>`).join("")}</select></label>
+      <label>Couleur des prises<input type="text" id="bCoul" list="cols2" value="${esc(b.couleur||"")}" placeholder="facultatif"></label>
+      <label>Points<input type="number" id="bPts" value="${esc(b.pts??"")}" placeholder="auto : ${10+10*(+b.niveau||1)}"></label></div>
+    <datalist id="cols2">${Object.keys(COULEURS).map(k=>`<option value="${k}">`).join("")}</datalist>
+    <label class="lab" for="bDefi">Défi / consigne</label><textarea class="in" id="bDefi" placeholder="ex. Départ assis mains sur les deux prises jaunes, sortie en haut du bloc sans les pieds sur le tapis">${esc(b.defi||"")}</textarea>
+    <div class="row" style="margin-top:10px"><button class="sw" role="switch" id="bAct" aria-checked="${b.active!==false}" data-act="bacttoggle" aria-label="Bloc actif"></button><span>Bloc actif (proposé aux élèves)</span></div>
+    <div class="row" style="margin-top:16px">${BE.id?`<button class="btn danger" data-act="delbloc" data-id="${BE.id}">Supprimer</button>`:""}<button class="btn ghost" data-act="close" style="margin-left:auto">Annuler</button><button class="btn pri" data-act="savebloc">Enregistrer</button></div>
+    <input type="file" id="bPhotoIn" hidden accept="image/*">
+  </div></div>`;
+}
+function readBlocForm(){return {nom:$("#bNom").value.trim()||"Bloc",niveau:+$("#bNiv").value||1,couleur:$("#bCoul").value.trim(),pts:$("#bPts").value.trim(),defi:$("#bDefi").value.trim(),active:$("#bAct").getAttribute("aria-checked")==="true"}}
+async function compressSmall(file){const r=await compressImg(file,900,.66);return r.img}
 
 /* ---------- roulette ---------- */
 const RL={niv:"",mode:"exact",eleveId:"",excl:true,cur:null,res:null,spin:false,planId:null};
@@ -520,7 +631,7 @@ function vTop(){
   const rec=(k,label,fmt,unit)=>{const best=Math.max(...rows.map(r=>r.s[k]));if(!(best>0))return "";
     const who=rows.filter(r=>r.s[k]===best);const shown=who.slice(0,3).map(r=>`${court(r.e)} <span>${esc(r.c.nom)}</span>`).join("<br>");
     return `<div class="rec"><span class="k">${label}</span><span class="v">${fmt(who[0])}${unit?`<small> ${unit}</small>`:""}</span><span class="n">${shown}${who.length>3?`<br><span>+ ${who.length-3} autre${who.length>4?"s":""}</span>`:""}</span></div>`};
-  const records=[rec("maxI","Plus haute cotation",r=>esc(r.s.maxC)),rec("reussies","Voies enchaînées",r=>r.s.reussies),rec("tete","Voies en tête",r=>r.s.tete),
+  const records=[rec("maxI","Plus haute cotation",r=>esc(r.s.maxC)),rec("reussies","Voies enchaînées",r=>r.s.reussies),rec("tete","Voies en tête",r=>r.s.tete),rec("blocs","Blocs réussis",r=>r.s.blocs),
     rec("hauteur","Mètres grimpés",r=>r.s.hauteur,"m"),rec("assure","Meilleur assureur",r=>r.s.assure,"assurages")].join("");
   const ids=new Map();cls.forEach(c=>c.eleves.forEach(e=>ids.set(e.id,{e,c})));
   const firsts=[...S.voies].sort((a,b)=>cotIndex(b.cotation)-cotIndex(a.cotation)).map(v=>{
@@ -587,12 +698,19 @@ function planHTML(p,o){
     const st=`left:${ps.x}%;top:${ps.y}%`;const lab=`Corde ${cordeLabel(g.name)} : ${g.voies.map(v=>v.cotation).join(", ")}`;
     if(o.ctx==="view")return `<span class="${cls}" style="${st}" title="${esc(lab)}">${inner}</span>`;
     return `<button class="${cls}" style="${st}" data-act="${o.ctx==="pick"?"pickcorde":"mk"}" data-id="c:${esc(g.name)}" data-c="${esc(g.name)}" aria-label="${esc(lab)}">${inner}</button>`}).join("");
-  const mks=mkG+mkS;
+  const kinds=o.kinds||(o.ctx==="tab"||o.ctx==="place"?"all":"voies");
+  const doneB=o.doneB||new Set();
+  const mkB=(S.blocs||[]).filter(b=>(!o.onlyActive||b.active)&&placedOn("b:"+b.id,p.id)).map(b=>{const ps=placedOn("b:"+b.id,p.id);
+    const cls=["bk",o.sel==="b:"+b.id?"sel":"",doneB.has(b.id)?"done":"",b.active?"":"off"].join(" ");const st=`left:${ps.x}%;top:${ps.y}%`;
+    const inner=`${esc(b.nom)}<small>${etoiles(b.niveau)}</small>`;const lab=`Bloc ${b.nom}, niveau ${b.niveau||1}`;
+    if(o.ctx==="view")return `<span class="${cls}" style="${st}" title="${esc(lab)}">${inner}</span>`;
+    return `<button class="${cls}" style="${st}" data-act="${o.ctx==="pickb"?"pickbloc":"mk"}" data-id="${o.ctx==="pickb"?b.id:"b:"+b.id}" aria-label="${esc(lab)}">${inner}</button>`}).join("");
+  const mks=(kinds==="blocs"?"":mkG+mkS)+(kinds==="voies"?"":mkB);
   const tap=o.ctx==="place"?` data-act="plantap" data-plan="${p.id}"`:"";
   return p.img?`<div class="plan ${o.ctx==="place"?"placing":""}"${tap}><img src="${p.img}" alt="Photo du mur ${esc(p.nom)}">${mks}</div>`
     :`<div class="plan schema ${o.ctx==="place"?"placing":""}" style="--ratio:${p.ratio||1.7}"${tap}>${mks}</div>`;
 }
-function placeItems(){return cordesList(false).map(g=>({id:"c:"+g.name,g})).concat(sortedVoies().filter(v=>!cordeKey(v)).map(v=>({id:v.id,v})))}
+function placeItems(){return cordesList(false).map(g=>({id:"c:"+g.name,g})).concat(sortedVoies().filter(v=>!cordeKey(v)).map(v=>({id:v.id,v}))).concat(sortedBlocs().map(b=>({id:"b:"+b.id,b})))}
 function vPlan(){
   const p=planById(S.planId)||S.plans[0];if(p)S.planId=p.id;
   const mode=S.planMode||"voir";const label=S.planLabel||"num";
@@ -608,36 +726,39 @@ function vPlan(){
   if(mode==="placer"){
     if(planSel&&!items.some(it=>it.id===planSel))planSel=null;
     const vc=items.map(it=>{const here=!!placedOn(it.id,p.id);const on=here;const autres=plansOf(it.id).filter(x=>x.id!==p.id);const st=(here?" ✓":"")+(autres.length?` <small style="font-weight:400">(aussi : ${autres.map(x=>esc(x.nom)).join(", ")})</small>`:"");
+      if(it.b)return `<button class="chip ${on?"placed":""}" data-act="mk" data-id="${esc(it.id)}" aria-pressed="${planSel===it.id}" style="border-style:dashed"><b>Bloc ${esc(it.b.nom)}</b><span style="color:var(--gold)">${etoiles(it.b.niveau)}</span>${st}</button>`;
       if(it.g)return `<button class="chip ${on?"placed":""}" data-act="mk" data-id="${esc(it.id)}" aria-pressed="${planSel===it.id}"><b>${esc(cordeLabel(it.g.name))}</b><span class="dots">${it.g.voies.map(v=>`<i style="background:${couleurHex(v.couleur)}"></i>`).join("")}</span>${it.g.voies.length} voie${it.g.voies.length>1?"s":""}${st}</button>`;
       const v=it.v;return `<button class="chip ${on?"placed":""}" data-act="mk" data-id="${v.id}" aria-pressed="${planSel===v.id}"><span class="dot" style="background:${couleurHex(v.couleur)}"></span>${esc(v.num)} · ${esc(v.cotation)}${st}</button>`}).join("");
     const si=planSel?items.find(it=>it.id===planSel):null;
-    const nm=si?(si.g?`la corde <b>${esc(cordeLabel(si.g.name))}</b> (${si.g.voies.length} voies)`:`la voie <b>n°${esc(si.v.num)}</b> (${esc(si.v.couleur)}, ${esc(si.v.cotation)})`):"";
-    tools=`<p class="sub" style="margin:10px 0 6px">${si?`Touchez la photo au niveau de ${nm}.`:"Choisissez une corde, puis touchez la photo à l'endroit de la corde."} L'élément suivant est sélectionné automatiquement. Une corde peut figurer sur plusieurs photos (plan global et gros plan) : placez-la sur chacune.</p>
+    const nm=si?(si.b?`le bloc <b>${esc(si.b.nom)}</b>`:si.g?`la corde <b>${esc(cordeLabel(si.g.name))}</b> (${si.g.voies.length} voies)`:`la voie <b>n°${esc(si.v.num)}</b> (${esc(si.v.couleur)}, ${esc(si.v.cotation)})`):"";
+    tools=`<p class="sub" style="margin:10px 0 6px">${si?`Touchez la photo au niveau de ${nm}.`:"Choisissez une corde ou un bloc, puis touchez la photo à son emplacement."} L'élément suivant est sélectionné automatiquement. Une corde peut figurer sur plusieurs photos (plan global et gros plan) : placez-la sur chacune.</p>
       ${noCorde?`<div class="notice">Vos voies n'ont pas encore de corde : ajoutez une colonne <b>Corde</b> à votre fichier Excel de voies, ou renseignez-la dans l'onglet Voies. Les voies d'une même corde partageront alors un seul repère.</div>`:""}
       <div class="chips" style="margin-bottom:10px">${vc||'<span class="sub">Aucune voie : importez-les d\'abord.</span>'}</div>
-      <div class="row" style="margin-bottom:10px"><button class="btn sm" data-act="copyfrom">Reprendre les cordes d'un autre plan…</button>${si&&placedOn(si.id,p.id)?`<button class="btn sm danger" data-act="unplace" data-id="${esc(si.id)}">Retirer ${si.g?"la corde "+esc(cordeLabel(si.g.name)):"la voie n°"+esc(si.v.num)} de ce plan</button>`:""}</div>`;
+      <div class="row" style="margin-bottom:10px"><button class="btn sm" data-act="copyfrom">Reprendre les cordes d'un autre plan…</button>${si&&placedOn(si.id,p.id)?`<button class="btn sm danger" data-act="unplace" data-id="${esc(si.id)}">Retirer ${si.b?"le bloc "+esc(si.b.nom):si.g?"la corde "+esc(cordeLabel(si.g.name)):"la voie n°"+esc(si.v.num)} de ce plan</button>`:""}</div>`;
   }else{
     tools=`<div class="row" style="margin:10px 0"><span class="lab" style="margin:0">Afficher</span><span class="seg"><button data-act="plabel" data-v="num" aria-pressed="${label==="num"}">N°</button><button data-act="plabel" data-v="cot" aria-pressed="${label==="cot"}">Cotation</button><button data-act="plabel" data-v="reu" aria-pressed="${label==="reu"}">Réussites</button></span></div>`;
     const c=classe();
     const line=v=>{const who=c?sortedEleves(c).filter(e=>S.passages.some(x=>x.eleveId===e.id&&x.voieId===v.id&&x.res==="ok")):[];
       return `<div class="info">${hold(v)}<b>${esc(v.cotation)}</b><span>${esc(v.couleur)}</span>${v.hauteur?`<span>${esc(v.hauteur)} m</span>`:""}<span class="tag">${basePts(v.cotation)} pts</span>${v.active?"":'<span class="tag">Désactivée</span>'}
         <span class="who">${c?`${who.length} élève${who.length>1?"s":""} de ${esc(c.nom)}${who.length?" : "+who.map(e=>esc(e.prenom)).join(", "):""}`:""}</span></div>`};
-    if(planSel&&planSel.startsWith("c:")){const g=cordesList(false).find(x=>x.name===planSel.slice(2));
+    if(planSel&&planSel.startsWith("b:")){const b=blocById(planSel.slice(2));
+      if(b)below=`<div class="panel" style="margin-top:10px"><div class="row" style="align-items:flex-start">${b.photo?`<img src="${b.photo}" alt="" style="width:110px;border-radius:8px">`:""}<div style="flex:1;min-width:0"><h3>Bloc ${esc(b.nom)} <span style="color:var(--gold)">${etoiles(b.niveau)}</span></h3><p>${esc(b.defi||"Pas encore de défi.")}</p></div></div><div class="row"><button class="btn" data-act="openbloc" data-id="${b.id}">Ouvrir la fiche du bloc</button></div></div>`}
+    else if(planSel&&planSel.startsWith("c:")){const g=cordesList(false).find(x=>x.name===planSel.slice(2));
       if(g)below=`<div class="panel" style="margin-top:10px"><h3>Corde ${esc(cordeLabel(g.name))}</h3>${g.voies.map(line).join("")}</div>`}
     else if(planSel&&voieById(planSel))below=`<div class="panel" style="margin-top:10px">${line(voieById(planSel))}</div>`;
   }
   const legend=label==="reu"&&mode==="voir"?`<p class="sub" style="margin:6px 0 0">Nombre de réussites d'élèves de la classe affichée (total des voies de la corde).</p>`:"";
-  return head+chips+`<div class="row" style="margin-top:14px"><span class="seg"><button data-act="pmode" data-v="voir" aria-pressed="${mode==="voir"}">Consulter</button><button data-act="pmode" data-v="placer" aria-pressed="${mode==="placer"}">Placer les cordes</button></span><span class="sub" style="margin:0 0 0 auto">${onPlan} repère${onPlan>1?"s":""} sur ce plan</span></div>`
+  return head+chips+`<div class="row" style="margin-top:14px"><span class="seg"><button data-act="pmode" data-v="voir" aria-pressed="${mode==="voir"}">Consulter</button><button data-act="pmode" data-v="placer" aria-pressed="${mode==="placer"}">Placer cordes &amp; blocs</button></span><span class="sub" style="margin:0 0 0 auto">${onPlan} repère${onPlan>1?"s":""} sur ce plan</span></div>`
     +tools+planHTML(p,{ctx:mode==="placer"?"place":"tab",sel:planSel,label:mode==="placer"?"num":label})+legend+below
     +`<div class="lab" style="margin-top:20px">Ce plan</div><div class="form"><label>Nom<input type="text" id="planNom" value="${esc(p.nom)}"></label><button class="btn" data-act="renplan">Renommer</button><button class="btn" data-act="chgphoto">${p.img?"Changer la photo":"Ajouter une photo"}</button><button class="btn danger" data-act="delplan">Supprimer</button></div>`+fileIn;
 }
 let photoTarget=null;
-async function compressImg(file){
+async function compressImg(file,maxSide,q){
   const url=URL.createObjectURL(file);
   try{const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error("Image illisible : utilisez une photo JPEG ou PNG."));i.src=url});
-    const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));const cv=document.createElement("canvas");
+    const k=Math.min(1,(maxSide||1600)/Math.max(img.naturalWidth,img.naturalHeight));const cv=document.createElement("canvas");
     cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
-    return {img:cv.toDataURL("image/jpeg",0.72),ratio:cv.width/cv.height}}
+    return {img:cv.toDataURL("image/jpeg",q||0.72),ratio:cv.width/cv.height}}
   finally{URL.revokeObjectURL(url)}
 }
 function nextUnplaced(after){const ids=placeItems().map(it=>it.id);const i=ids.indexOf(after);const rest=ids.slice(i+1).concat(ids.slice(0,i+1));
@@ -689,6 +810,27 @@ document.addEventListener("click",ev=>{
   const c=classe();
   switch(a){
     case "close":closeModal();break;
+    case "pkind":draft.kind=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
+    case "bview":S.blocView=t.dataset.v;saveLocal();drawPassage(eleveById(draft.eleveId));break;
+    case "pickbloc":if(draft){draft.blocId=id;drawPassage(eleveById(draft.eleveId))}break;
+    case "bres":draft.bres=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
+    case "savebp":{const b=blocById(draft.blocId);if(!b)return;const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,blocId:b.id,res:draft.bres||"ok",date:new Date().toISOString()};
+      S.blocPass.push(p);save();closeModal();render();toast(p.res==="ok"?`${fullName(eleveById(p.eleveId))} : bloc ${b.nom} réussi !`:"Essai noté");break}
+    case "delbp":S.blocPass=S.blocPass.filter(p=>p.id!==id);save();render();toast("Passage annulé");break;
+    case "blocniv":S.blocNiv=t.dataset.v;saveLocal();render();break;
+    case "openbloc":openBloc(id);break;
+    case "newbloc":openBlocEdit(null);break;
+    case "editbloc":openBlocEdit(id);break;
+    case "importblocs":$("#blocsIn").value="";$("#blocsIn").click();break;
+    case "blocphoto":$("#bPhotoIn").value="";$("#bPhotoIn").click();break;
+    case "blocnophoto":{const f=readBlocForm();BE.photo=null;drawBlocEdit(f);break}
+    case "bacttoggle":t.setAttribute("aria-checked",t.getAttribute("aria-checked")==="true"?"false":"true");break;
+    case "savebloc":{const f=readBlocForm();if(BE.id){Object.assign(blocById(BE.id),f,{photo:BE.photo})}else{const b=Object.assign({id:uid()},f,{photo:BE.photo});S.blocs.push(b);BE.id=b.id}
+      if(!save())return;const bid=BE.id;closeModal();render();openBloc(bid);toast("Bloc enregistré");break}
+    case "delbloc":{const b=blocById(id);ask(`Supprimer le bloc ${b.nom} ? Ses réussites ne rapporteront plus de points.`,()=>{S.blocs=S.blocs.filter(x=>x.id!==id);delete S.pos["b:"+id];save();render()});break}
+    case "bnote":{const eid=$("#bEl").value;if(!eid)return toast("Choisissez l'élève");const b=blocById(id);
+      S.blocPass.push({id:uid(),classeId:c.id,eleveId:eid,blocId:id,res:t.dataset.r,date:new Date().toISOString()});save();render();openBloc(id);
+      toast(t.dataset.r==="ok"?`${fullName(eleveById(eid))} : bloc ${b.nom} réussi ! +${blocPts(b)} pts`:"Essai noté");break}
     case "syncnow":syncNow();break;
     case "lock":SY.unlocked=false;persistSY();showLock();break;
     case "savecode":{const o=$("#cOld").value.trim(),n=$("#cNew").value.trim(),n2=$("#cNew2").value.trim();
@@ -717,8 +859,8 @@ document.addEventListener("click",ev=>{
     case "tv":{const on=!document.body.classList.contains("tv");document.body.classList.toggle("tv",on);
       try{if(on&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});else if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(e){}
       render();window.scrollTo(0,0);break}
-    case "expclass":{const rows=rankingRows(c);const L=[["Rang","Nom","Prénom","Points","Voies enchaînées","Niveau max","Voies en tête","Assurages","Hauteur (m)","Permis grimper","Permis assurer","Permis tête"]];
-      rows.forEach((r,i)=>L.push([i+1,r.e.nom,r.e.prenom,r.s.pts,r.s.reussies,r.s.maxC,r.s.tete,r.s.assure,r.s.hauteur,r.e.permis.grimper?"oui":"non",r.e.permis.assurer?"oui":"non",r.e.permis.tete?"oui":"non"]));
+    case "expclass":{const rows=rankingRows(c);const L=[["Rang","Nom","Prénom","Points","Voies enchaînées","Niveau max","Blocs réussis","Points blocs","Voies en tête","Assurages","Hauteur (m)","Permis grimper","Permis assurer","Permis tête"]];
+      rows.forEach((r,i)=>L.push([i+1,r.e.nom,r.e.prenom,r.s.pts,r.s.reussies,r.s.maxC,r.s.blocs,r.s.blocPts,r.s.tete,r.s.assure,r.s.hauteur,r.e.permis.grimper?"oui":"non",r.e.permis.assurer?"oui":"non",r.e.permis.tete?"oui":"non"]));
       download(`escalade_${c.nom}_${today()}.csv`,toCSV(L),"text/csv");break}
     case "permis":{const e=eleveById(id);e.permis[t.dataset.k]=!e.permis[t.dataset.k];save();render();break}
     case "allpermis":c.eleves.forEach(e=>e.permis[t.dataset.k]=true);save();render();break;
@@ -750,10 +892,10 @@ document.addEventListener("click",ev=>{
       const x=Math.min(98,Math.max(2,(ev.clientX-r.left)/r.width*100)),y=Math.min(97,Math.max(3,(ev.clientY-r.top)/r.height*100));
       const pos={plan:t.dataset.plan,x:+x.toFixed(2),y:+y.toFixed(2)};
       (S.pos[planSel]=S.pos[planSel]||{})[pos.plan]={x:pos.x,y:pos.y};
-      toast(planSel.startsWith("c:")?`Corde ${cordeLabel(planSel.slice(2))} placée`:`Voie n°${voieById(planSel).num} placée`);
+      toast(planSel.startsWith("c:")?`Corde ${cordeLabel(planSel.slice(2))} placée`:planSel.startsWith("b:")?`Bloc ${(blocById(planSel.slice(2))||{}).nom} placé`:`Voie n°${voieById(planSel).num} placée`);
       save();planSel=nextUnplaced(planSel);render();break}
     case "unplace":{if(S.pos[id])delete S.pos[id][S.planId];save();render();break}
-    case "goplace":{const pls=plansOf(id);S.tab="plan";S.planMode="placer";planSel=id;if(pls.length&&!pls.some(x=>x.id===S.planId))S.planId=pls[0].id;save();render();window.scrollTo(0,0);break}
+    case "goplace":{closeModal();const pls=plansOf(id);S.tab="plan";S.planMode="placer";planSel=id;if(pls.length&&!pls.some(x=>x.id===S.planId))S.planId=pls[0].id;save();render();window.scrollTo(0,0);break}
     case "copyfrom":{const autres=S.plans.filter(x=>x.id!==S.planId&&Object.values(S.pos).some(m=>m[x.id]));if(!autres.length)return toast("Aucun autre plan avec des cordes placées");
       $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" style="max-width:480px"><h3>Reprendre les cordes</h3><p class="sub">Les cordes placées sur le plan choisi sont ajoutées à celui-ci aux mêmes emplacements. Utile si les deux photos ont le même cadrage ; sinon, déplacez-les ensuite.</p><div class="list">${autres.map(x=>`<button class="btn" data-act="docopy" data-id="${x.id}">${esc(x.nom)}</button>`).join("")}</div><div class="row" style="margin-top:12px"><button class="btn ghost" data-act="close">Annuler</button></div></div></div>`;break}
     case "docopy":{let n=0;for(const k in S.pos){const m=S.pos[k];if(m[id]&&!m[S.planId]){m[S.planId]={...m[id]};n++}}closeModal();save();render();toast(`${n} repère${n>1?"s":""} ajouté${n>1?"s":""}`);break}
@@ -765,6 +907,15 @@ document.addEventListener("click",ev=>{
   }
 });
 document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&document.body.classList.contains("tv")){document.body.classList.remove("tv");render()}});
+document.addEventListener("change",async ev=>{
+  const t=ev.target;
+  if(t.id==="bPhotoIn"){const f=t.files[0];if(!f)return;try{const f2=readBlocForm();BE.photo=await compressSmall(f);drawBlocEdit(f2)}catch(e){toast(e.message||"Photo illisible")}}
+  if(t.id==="blocsIn"){const fs=[...t.files];if(!fs.length)return;toast(`Préparation de ${fs.length} photo${fs.length>1?"s":""}…`);let n=0;
+    for(const f of fs){try{const img=await compressSmall(f);const base=f.name.replace(/\.[^.]+$/,"").trim();
+      const nom=base&&base.length<=14&&!/^(img|dsc|pxl|photo|image|whatsapp|screenshot)/i.test(base)&&!/^\d{5,}$/.test(base)?base:"B"+(S.blocs.length+1);
+      S.blocs.push({id:uid(),nom,niveau:1,couleur:"",pts:"",defi:"",photo:img,active:true});n++}catch(e){}}
+    if(!save()){return}render();toast(`${n} bloc${n>1?"s":""} créé${n>1?"s":""} : complétez niveau et défi`)}
+});
 $("#classSel").onchange=e=>{S.classeId=e.target.value;save();render()};
 
 /* ---------- export ---------- */

@@ -183,18 +183,23 @@ function demo(){
   const add=(e,v,mode,res,a)=>pass.push({id:uid(),classeId:cid,eleveId:eleves[e].id,voieId:voies[v].id,mode,res,assureurId:a==null?null:eleves[a].id,date:d});
   add(0,3,"moul","ok",1);add(0,4,"moul","ok",1);add(0,6,"tete","repos",1);add(1,3,"moul","ok",0);add(1,5,"moul","ok",0);
   add(2,2,"moul","ok",3);add(3,1,"moul","ok",2);add(3,3,"moul","repos",2);add(4,0,"moul","ok",5);add(5,1,"moul","echec",4);
-  const cordes={};const plans=[demoPlan(voies,cordes)];
-  return {classes:[{id:cid,nom:"5e Exemple",eleves}],voies,passages:pass,plans,cordes,reglages:{bonusTete:50,repos:50,uneFoisParVoie:true},classeId:cid,demo:true,tab:"seance"};
+  const pos={};const plans=[demoPlan(voies,pos)];
+  return {classes:[{id:cid,nom:"5e Exemple",eleves}],voies,passages:pass,plans,pos,reglages:{bonusTete:50,repos:50,uneFoisParVoie:true},classeId:cid,demo:true,tab:"seance"};
 }
-function demoPlan(voies,cordes){
+function demoPlan(voies,pos){
   const pid=uid();
   voies.forEach((v,i)=>{if(!v.corde)v.corde=String(Math.floor(i/3)+1);delete v.pos});
-  [...new Set(voies.map(v=>v.corde))].forEach((c,i,a)=>{cordes[c]={plan:pid,x:+(100*(i+0.5)/a.length).toFixed(1),y:55}});
+  [...new Set(voies.map(v=>v.corde))].forEach((c,i,a)=>{pos["c:"+c]={[pid]:{x:+(100*(i+0.5)/a.length).toFixed(1),y:55}}});
   return {id:pid,nom:"Mur (schéma)",img:null,ratio:1.7};
 }
+function migrate(){
+  S.plans=S.plans||[];S.pos=S.pos||{};
+  if(S.cordes){for(const k in S.cordes){const c=S.cordes[k];if(c&&c.plan)(S.pos["c:"+k]=S.pos["c:"+k]||{})[c.plan]={x:c.x,y:c.y}}delete S.cordes}
+  (S.voies||[]).forEach(v=>{if(v.pos&&v.pos.plan)(S.pos[v.id]=S.pos[v.id]||{})[v.pos.plan]={x:v.pos.x,y:v.pos.y};delete v.pos});
+}
 S=load()||demo();
-S.plans=S.plans||[];S.cordes=S.cordes||{};
-if(S.demo&&(!S.plans.length||!S.voies.some(v=>v.corde))){S.plans=[demoPlan(S.voies,S.cordes)]}
+migrate();
+if(S.demo&&(!S.plans.length||!S.voies.some(v=>v.corde))){S.pos={};S.plans=[demoPlan(S.voies,S.pos)]}
 S.reglages=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},S.reglages||{});
 
 /* ---------- cotations & points ---------- */
@@ -274,7 +279,7 @@ function drawPassage(e){
   const view=pp.length?(S.voieView||"plan"):"liste";
   let choix;
   if(view==="plan"){
-    const pl=pp.find(p=>p.id===draft.planId)||pp.find(p=>v&&posOf(v)&&posOf(v).plan===p.id)||pp[0];draft.planId=pl.id;
+    const pl=pp.find(p=>p.id===draft.planId)||pp.find(p=>v&&placedOn(itemOf(v),p.id))||pp[0];draft.planId=pl.id;
     const ck=draft.corde||(v?cordeKey(v):"");const g=ck?cordesList(true).find(x=>x.name===ck):null;
     choix=`${pp.length>1?`<div class="chips" style="margin-bottom:8px">${pp.map(p=>`<button class="chip" data-act="pplan" data-id="${p.id}" aria-pressed="${p.id===pl.id}">${esc(p.nom)}</button>`).join("")}</div>`:""}
       ${planHTML(pl,{ctx:"pick",sel:draft.voieId,selCorde:ck,done,label:"num",onlyActive:true})}
@@ -339,7 +344,7 @@ function openCarnet(eid){
 let editVoie=null;
 function vVoies(){
   const cnt={};S.passages.forEach(p=>{if(p.res==="ok")cnt[p.voieId]=(cnt[p.voieId]||0)+1});
-  const tr=sortedVoies().map(v=>`<tr class="${v.active?"":"dim"}"><td>${hold(v)}</td><td>${esc(v.couleur)}</td><td><b>${esc(v.cotation)}</b></td><td class="num">${basePts(v.cotation)}</td><td>${cordeKey(v)?esc(cordeLabel(cordeKey(v))):"—"}</td><td>${esc(v.secteur||"—")}</td><td class="num">${v.hauteur?esc(v.hauteur)+" m":"—"}</td><td class="num">${cnt[v.id]||0}</td><td>${(()=>{const it=cordeKey(v)?"c:"+cordeKey(v):v.id;const ps=posOf(v);const pl=ps&&planById(ps.plan);return pl?`<button class="btn sm ghost" data-act="goplace" data-id="${esc(it)}">${esc(pl.nom)}</button>`:`<button class="btn sm" data-act="goplace" data-id="${esc(it)}">${cordeKey(v)?"Placer la corde":"Placer"}</button>`})()}</td><td><button class="sw" role="switch" aria-checked="${!!v.active}" data-act="voieactive" data-id="${v.id}" aria-label="Voie active"></button></td><td><button class="btn sm" data-act="editvoie" data-id="${v.id}">Modifier</button> <button class="btn sm ghost" data-act="delvoie" data-id="${v.id}">Supprimer</button></td></tr>`).join("");
+  const tr=sortedVoies().map(v=>`<tr class="${v.active?"":"dim"}"><td>${hold(v)}</td><td>${esc(v.couleur)}</td><td><b>${esc(v.cotation)}</b></td><td class="num">${basePts(v.cotation)}</td><td>${cordeKey(v)?esc(cordeLabel(cordeKey(v))):"—"}</td><td>${esc(v.secteur||"—")}</td><td class="num">${v.hauteur?esc(v.hauteur)+" m":"—"}</td><td class="num">${cnt[v.id]||0}</td><td>${(()=>{const it=itemOf(v);const pls=plansOf(it);return pls.length?`<button class="btn sm ghost" data-act="goplace" data-id="${esc(it)}">${pls.length>2?pls.length+" plans":pls.map(x=>esc(x.nom)).join(", ")}</button>`:`<button class="btn sm" data-act="goplace" data-id="${esc(it)}">${cordeKey(v)?"Placer la corde":"Placer"}</button>`})()}</td><td><button class="sw" role="switch" aria-checked="${!!v.active}" data-act="voieactive" data-id="${v.id}" aria-label="Voie active"></button></td><td><button class="btn sm" data-act="editvoie" data-id="${v.id}">Modifier</button> <button class="btn sm ghost" data-act="delvoie" data-id="${v.id}">Supprimer</button></td></tr>`).join("");
   const ev=editVoie?voieById(editVoie):null;
   const opts=Object.keys(COULEURS).map(k=>`<option value="${k}">`).join("");
   return `<h2>Voies du mur</h2><p class="sub">${S.voies.length} voies · désactivez une voie démontée sans perdre l'historique. Points de base : 3a = 10, puis +3 par demi-cotation (4a = 28, 5a = 46, 6a = 64). Les voies d'une même corde partagent un seul repère sur le plan.</p>
@@ -358,23 +363,24 @@ const cordeLabel=n=>/^\d+$/.test(String(n))?"C"+n:String(n);
 const byNum=(a,b)=>String(a.num).localeCompare(String(b.num),"fr",{numeric:true});
 function cordesList(onlyActive){const m={};S.voies.forEach(v=>{const k=cordeKey(v);if(k&&(!onlyActive||v.active))(m[k]=m[k]||[]).push(v)});
   return Object.keys(m).sort((a,b)=>a.localeCompare(b,"fr",{numeric:true})).map(k=>({name:k,voies:m[k].sort(byNum)}))}
-function posOf(v){const k=cordeKey(v);return k?(S.cordes[k]||null):(v.pos||null)}
-function itemPos(it){return it.startsWith("c:")?S.cordes[it.slice(2)]:(voieById(it)||{}).pos}
-function plansAvecVoies(onlyActive){return S.plans.filter(p=>S.voies.some(v=>(!onlyActive||v.active)&&posOf(v)&&posOf(v).plan===p.id))}
+const itemOf=v=>cordeKey(v)?"c:"+cordeKey(v):v.id;
+const placedOn=(it,pid)=>(S.pos[it]||{})[pid]||null;
+const plansOf=it=>S.plans.filter(p=>placedOn(it,p.id));
+function plansAvecVoies(onlyActive){return S.plans.filter(p=>S.voies.some(v=>(!onlyActive||v.active)&&placedOn(itemOf(v),p.id)))}
 function reussitesParVoie(){const c=classe();const ids=c?new Set(c.eleves.map(e=>e.id)):new Set();const m={};
   S.passages.forEach(p=>{if(p.res==="ok"&&ids.has(p.eleveId)){(m[p.voieId]=m[p.voieId]||new Set()).add(p.eleveId)}});return m}
 function vbtn(v,done,sel){const h=couleurHex(v.couleur);return `<button class="vbtn ${done.has(v.id)?"done":""}" style="background:${h};color:${inkOn(h)}" data-act="pickvoie" data-id="${v.id}" aria-pressed="${sel===v.id}"><span class="c">${esc(v.cotation)}</span><span class="n">n°${esc(v.num)}${cordeKey(v)?" · "+esc(cordeLabel(cordeKey(v))):""}${done.has(v.id)?" ✓":""}</span></button>`}
 function planHTML(p,o){
   o=o||{};const done=o.done||new Set();const cnt=o.label==="reu"?reussitesParVoie():null;const nb=v=>cnt&&cnt[v.id]?cnt[v.id].size:0;
   const act=o.ctx==="pick"?"pickvoie":"mk";
-  const singles=S.voies.filter(v=>(!o.onlyActive||v.active)&&!cordeKey(v)&&v.pos&&v.pos.plan===p.id);
-  const groups=cordesList(o.onlyActive).filter(g=>S.cordes[g.name]&&S.cordes[g.name].plan===p.id);
+  const singles=S.voies.filter(v=>(!o.onlyActive||v.active)&&!cordeKey(v)&&placedOn(v.id,p.id));
+  const groups=cordesList(o.onlyActive).filter(g=>placedOn("c:"+g.name,p.id));
   const mkS=singles.map(v=>{const h=couleurHex(v.couleur);const txt=o.label==="cot"?v.cotation:o.label==="reu"?nb(v):v.num;
     const cls=["mk",o.sel===v.id?"sel":"",done.has(v.id)?"done":"",o.fadeUndone&&!done.has(v.id)?"faded":"",v.active?"":"off"].join(" ");
-    const st=`left:${v.pos.x}%;top:${v.pos.y}%;background:${h};color:${inkOn(h)}`;const lab=`Voie ${v.num}, ${v.couleur}, ${v.cotation}`;
+    const ps=placedOn(v.id,p.id);const st=`left:${ps.x}%;top:${ps.y}%;background:${h};color:${inkOn(h)}`;const lab=`Voie ${v.num}, ${v.couleur}, ${v.cotation}`;
     if(o.ctx==="view")return `<span class="${cls}" style="${st}" title="${esc(lab)}">${esc(txt)}</span>`;
     return `<button class="${cls}" style="${st}" data-act="${act}" data-id="${v.id}" aria-label="${esc(lab)}">${esc(txt)}</button>`}).join("");
-  const mkG=groups.map(g=>{const ps=S.cordes[g.name];const nd=g.voies.filter(v=>done.has(v.id)).length;
+  const mkG=groups.map(g=>{const ps=placedOn("c:"+g.name,p.id);const nd=g.voies.filter(v=>done.has(v.id)).length;
     const cots=g.voies.map(v=>v.cotation).sort((a,b)=>cotIndex(a)-cotIndex(b));
     const txt=o.label==="cot"?(cots.length>1?cots[0]+"–"+cots[cots.length-1]:cots[0]):o.label==="reu"?g.voies.reduce((s,v)=>s+nb(v),0):cordeLabel(g.name);
     const dots=g.voies.map(v=>`<i class="${o.fadeUndone&&!done.has(v.id)?"u":""}" style="background:${couleurHex(v.couleur)}"></i>`).join("");
@@ -399,20 +405,20 @@ function vPlan(){
   const fileIn=`<input type="file" id="photoIn" hidden accept="image/*">`;
   if(!p)return head+chips+`<div class="empty" style="margin-top:12px">Prenez en photo un pan de votre mur (de face, en entier), puis placez chaque corde dessus.<br><br><button class="btn pri" data-act="addphoto">Ajouter une photo du mur</button></div>`+fileIn;
   const items=placeItems();
-  const onPlan=items.filter(it=>{const ps=itemPos(it.id);return ps&&ps.plan===p.id}).length;
+  const onPlan=items.filter(it=>placedOn(it.id,p.id)).length;
   const noCorde=S.voies.length&&!S.voies.some(v=>cordeKey(v));
   let tools,below="";
   if(mode==="placer"){
     if(planSel&&!items.some(it=>it.id===planSel))planSel=null;
-    const vc=items.map(it=>{const ps=itemPos(it.id);const on=ps&&planById(ps.plan);const here=on&&ps.plan===p.id;const st=here?" ✓":on?" ("+esc(on.nom)+")":"";
-      if(it.g)return `<button class="chip ${on?"placed":""}" data-act="mk" data-id="${esc(it.id)}" aria-pressed="${planSel===it.id}"><b>${esc(cordeLabel(it.g.name))}</b><span class="dots">${it.g.voies.map(v=>`<i style="background:${couleurHex(v.couleur)}"></i>`).join("")}</span>${it.g.voies.length} voies${st}</button>`;
+    const vc=items.map(it=>{const here=!!placedOn(it.id,p.id);const on=here;const autres=plansOf(it.id).filter(x=>x.id!==p.id);const st=(here?" ✓":"")+(autres.length?` <small style="font-weight:400">(aussi : ${autres.map(x=>esc(x.nom)).join(", ")})</small>`:"");
+      if(it.g)return `<button class="chip ${on?"placed":""}" data-act="mk" data-id="${esc(it.id)}" aria-pressed="${planSel===it.id}"><b>${esc(cordeLabel(it.g.name))}</b><span class="dots">${it.g.voies.map(v=>`<i style="background:${couleurHex(v.couleur)}"></i>`).join("")}</span>${it.g.voies.length} voie${it.g.voies.length>1?"s":""}${st}</button>`;
       const v=it.v;return `<button class="chip ${on?"placed":""}" data-act="mk" data-id="${v.id}" aria-pressed="${planSel===v.id}"><span class="dot" style="background:${couleurHex(v.couleur)}"></span>${esc(v.num)} · ${esc(v.cotation)}${st}</button>`}).join("");
     const si=planSel?items.find(it=>it.id===planSel):null;
     const nm=si?(si.g?`la corde <b>${esc(cordeLabel(si.g.name))}</b> (${si.g.voies.length} voies)`:`la voie <b>n°${esc(si.v.num)}</b> (${esc(si.v.couleur)}, ${esc(si.v.cotation)})`):"";
-    tools=`<p class="sub" style="margin:10px 0 6px">${si?`Touchez la photo au niveau de ${nm}.`:"Choisissez une corde, puis touchez la photo à l'endroit de la corde."} L'élément suivant est sélectionné automatiquement.</p>
+    tools=`<p class="sub" style="margin:10px 0 6px">${si?`Touchez la photo au niveau de ${nm}.`:"Choisissez une corde, puis touchez la photo à l'endroit de la corde."} L'élément suivant est sélectionné automatiquement. Une corde peut figurer sur plusieurs photos (plan global et gros plan) : placez-la sur chacune.</p>
       ${noCorde?`<div class="notice">Vos voies n'ont pas encore de corde : ajoutez une colonne <b>Corde</b> à votre fichier Excel de voies, ou renseignez-la dans l'onglet Voies. Les voies d'une même corde partageront alors un seul repère.</div>`:""}
       <div class="chips" style="margin-bottom:10px">${vc||'<span class="sub">Aucune voie : importez-les d\'abord.</span>'}</div>
-      ${si&&itemPos(si.id)?`<div class="row" style="margin-bottom:10px"><button class="btn sm danger" data-act="unplace" data-id="${esc(si.id)}">Retirer ${si.g?"la corde "+esc(cordeLabel(si.g.name)):"la voie n°"+esc(si.v.num)} du plan</button></div>`:""}`;
+      <div class="row" style="margin-bottom:10px"><button class="btn sm" data-act="copyfrom">Reprendre les cordes d'un autre plan…</button>${si&&placedOn(si.id,p.id)?`<button class="btn sm danger" data-act="unplace" data-id="${esc(si.id)}">Retirer ${si.g?"la corde "+esc(cordeLabel(si.g.name)):"la voie n°"+esc(si.v.num)} de ce plan</button>`:""}</div>`;
   }else{
     tools=`<div class="row" style="margin:10px 0"><span class="lab" style="margin:0">Afficher</span><span class="seg"><button data-act="plabel" data-v="num" aria-pressed="${label==="num"}">N°</button><button data-act="plabel" data-v="cot" aria-pressed="${label==="cot"}">Cotation</button><button data-act="plabel" data-v="reu" aria-pressed="${label==="reu"}">Réussites</button></span></div>`;
     const c=classe();
@@ -438,7 +444,7 @@ async function compressImg(file){
   finally{URL.revokeObjectURL(url)}
 }
 function nextUnplaced(after){const ids=placeItems().map(it=>it.id);const i=ids.indexOf(after);const rest=ids.slice(i+1).concat(ids.slice(0,i+1));
-  const n=rest.find(id=>{const ps=itemPos(id);return !ps||!planById(ps.plan)})||rest.find(id=>{const ps=itemPos(id);return id!==after&&(!ps||ps.plan!==S.planId)});return n||null}
+  return rest.find(id=>id!==after&&!placedOn(id,S.planId))||null}
 
 function vDonnees(){
   const inFrame=(()=>{try{return window.top!==window}catch(e){return true}})();
@@ -480,7 +486,7 @@ document.addEventListener("click",ev=>{
   const c=classe();
   switch(a){
     case "close":closeModal();break;
-    case "cleardemo":ask("Effacer la classe et les voies d'exemple ?",()=>{S={classes:[],voies:[],passages:[],plans:[],cordes:{},reglages:S.reglages,classeId:null,tab:"donnees"};planSel=null;save();render()});break;
+    case "cleardemo":ask("Effacer la classe et les voies d'exemple ?",()=>{S={classes:[],voies:[],passages:[],plans:[],pos:{},reglages:S.reglages,classeId:null,tab:"donnees"};planSel=null;save();render()});break;
     case "passage":openPassage(id);break;
     case "pickvoie":draft.voieId=id;draft.corde=cordeKey(voieById(id))||"";drawPassage(eleveById(draft.eleveId));break;
     case "pickcorde":{draft.corde=t.dataset.c;const g=cordesList(true).find(x=>x.name===draft.corde);if(g&&g.voies.length===1)draft.voieId=g.voies[0].id;else if(draft.voieId&&cordeKey(voieById(draft.voieId))!==draft.corde)draft.voieId=null;drawPassage(eleveById(draft.eleveId));break}
@@ -523,14 +529,18 @@ document.addEventListener("click",ev=>{
     case "plantap":{if(!planSel)return toast("Choisissez d'abord une voie au-dessus de la photo");const r=t.getBoundingClientRect();
       const x=Math.min(98,Math.max(2,(ev.clientX-r.left)/r.width*100)),y=Math.min(97,Math.max(3,(ev.clientY-r.top)/r.height*100));
       const pos={plan:t.dataset.plan,x:+x.toFixed(2),y:+y.toFixed(2)};
-      if(planSel.startsWith("c:")){S.cordes[planSel.slice(2)]=pos;toast(`Corde ${cordeLabel(planSel.slice(2))} placée`)}else{const v=voieById(planSel);v.pos=pos;toast(`Voie n°${v.num} placée`)}
+      (S.pos[planSel]=S.pos[planSel]||{})[pos.plan]={x:pos.x,y:pos.y};
+      toast(planSel.startsWith("c:")?`Corde ${cordeLabel(planSel.slice(2))} placée`:`Voie n°${voieById(planSel).num} placée`);
       save();planSel=nextUnplaced(planSel);render();break}
-    case "unplace":{if(id.startsWith("c:"))delete S.cordes[id.slice(2)];else delete voieById(id).pos;save();render();break}
-    case "goplace":{const ps=itemPos(id);S.tab="plan";S.planMode="placer";planSel=id;if(ps&&planById(ps.plan))S.planId=ps.plan;save();render();window.scrollTo(0,0);break}
+    case "unplace":{if(S.pos[id])delete S.pos[id][S.planId];save();render();break}
+    case "goplace":{const pls=plansOf(id);S.tab="plan";S.planMode="placer";planSel=id;if(pls.length&&!pls.some(x=>x.id===S.planId))S.planId=pls[0].id;save();render();window.scrollTo(0,0);break}
+    case "copyfrom":{const autres=S.plans.filter(x=>x.id!==S.planId&&Object.values(S.pos).some(m=>m[x.id]));if(!autres.length)return toast("Aucun autre plan avec des cordes placées");
+      $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" style="max-width:480px"><h3>Reprendre les cordes</h3><p class="sub">Les cordes placées sur le plan choisi sont ajoutées à celui-ci aux mêmes emplacements. Utile si les deux photos ont le même cadrage ; sinon, déplacez-les ensuite.</p><div class="list">${autres.map(x=>`<button class="btn" data-act="docopy" data-id="${x.id}">${esc(x.nom)}</button>`).join("")}</div><div class="row" style="margin-top:12px"><button class="btn ghost" data-act="close">Annuler</button></div></div></div>`;break}
+    case "docopy":{let n=0;for(const k in S.pos){const m=S.pos[k];if(m[id]&&!m[S.planId]){m[S.planId]={...m[id]};n++}}closeModal();save();render();toast(`${n} repère${n>1?"s":""} ajouté${n>1?"s":""}`);break}
     case "addschema":{const p={id:uid(),nom:`Mur ${S.plans.length+1}`,img:null,ratio:1.7};S.plans.push(p);S.planId=p.id;S.planMode="placer";planSel=nextUnplaced(null);save();render();break}
     case "addphoto":case "chgphoto":photoTarget=a==="addphoto"?"new":S.planId;$("#photoIn").value="";$("#photoIn").click();break;
     case "renplan":{const p=planById(S.planId);const n=$("#planNom").value.trim();if(!n)return toast("Indiquez un nom");p.nom=n;save();render();toast("Plan renommé");break}
-    case "delplan":{const p=planById(S.planId);if(p)ask(`Supprimer le plan « ${p.nom} » ? Les voies restent dans la liste mais les cordes devront être replacées.`,()=>{S.voies.forEach(v=>{if(v.pos&&v.pos.plan===p.id)delete v.pos});Object.keys(S.cordes).forEach(k=>{if(S.cordes[k].plan===p.id)delete S.cordes[k]});S.plans=S.plans.filter(x=>x.id!==p.id);S.planId=S.plans[0]?.id||null;planSel=null;save();render()});break}
+    case "delplan":{const p=planById(S.planId);if(p)ask(`Supprimer le plan « ${p.nom} » ? Les voies et les cordes restent sur les autres plans.`,()=>{Object.values(S.pos).forEach(m=>delete m[p.id]);S.plans=S.plans.filter(x=>x.id!==p.id);S.planId=S.plans[0]?.id||null;planSel=null;save();render()});break}
     case "resetpass":if(c)ask(`Effacer tous les passages de ${c.nom} ? Les élèves et permis sont conservés.`,()=>{const ids=new Set(c.eleves.map(e=>e.id));S.passages=S.passages.filter(p=>!ids.has(p.eleveId));save();render()});break;
   }
 });
@@ -553,7 +563,7 @@ $("#main").addEventListener("change",async ev=>{
     return}
   if(ev.target.id!=="fileIn")return;const f=ev.target.files[0];if(!f)return;
   try{
-    if(pickTarget==="restore"){const d=JSON.parse(await f.text());if(!d.classes||!d.voies)throw new Error("Ce fichier n'est pas une sauvegarde Grimpe EPS.");S=d;S.plans=S.plans||[];S.cordes=S.cordes||{};S.reglages=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},S.reglages||{});planSel=null;save();render();toast("Sauvegarde restaurée");return}
+    if(pickTarget==="restore"){const d=JSON.parse(await f.text());if(!d.classes||!d.voies)throw new Error("Ce fichier n'est pas une sauvegarde Grimpe EPS.");S=d;migrate();S.reglages=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},S.reglages||{});planSel=null;save();render();toast("Sauvegarde restaurée");return}
     const sheets=await readTable(f);
     if(pickTarget==="classes")importClasses(sheets);else importVoies(sheets);
   }catch(e){toast(e.message||"Import impossible")}
@@ -628,7 +638,7 @@ function importVoies(sheets){
   let add=0,maj=0;list.forEach((o,k)=>{if(!o.num)o.num=String(k+1);const ex=S.voies.find(v=>String(v.num)===o.num);if(ex){Object.assign(ex,o,{active:true});maj++}else{S.voies.push(Object.assign({id:uid(),active:true},o));add++}});
   S.tab="voies";save();render();toast(`${add} voies ajoutées, ${maj} mises à jour`);
 }
-function dropDemo(){if(S.demo){S.classes=[];S.voies=[];S.passages=[];S.plans=[];S.cordes={};S.planId=null;planSel=null;S.demo=false}}
+function dropDemo(){if(S.demo){S.classes=[];S.voies=[];S.passages=[];S.plans=[];S.pos={};S.planId=null;planSel=null;S.demo=false}}
 
 /* ---------- démarrage ---------- */
 render();

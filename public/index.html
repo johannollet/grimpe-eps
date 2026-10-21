@@ -278,7 +278,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="9.1 · blocs sur le mur";
+const APP_VERSION="9.2 · roulette rapide";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -615,9 +615,9 @@ function spin(){
   const n=reduce||c.length===1?1:Math.min(34,16+c.length*2);const seq=[];let prev=null;
   for(let i=0;i<n-1;i++){let x;do{x=c[Math.floor(Math.random()*c.length)]}while(c.length>1&&x===prev);seq.push(x);prev=x}
   if(seq.length&&seq[seq.length-1]===RL.res&&c.length>1)seq.pop();
-  seq.push(RL.res);RL.spin=true;let i=0,d=40;
+  seq.push(RL.res);RL.spin=true;let i=0,d=20;
   drawStage();
-  (function tick(){RL.cur=seq[i];i++;if(i>=seq.length){RL.spin=false;drawStage()}else drawStage("show");if(i<seq.length){d=Math.min(d*1.13,420);setTimeout(tick,d)}})();
+  (function tick(){RL.cur=seq[i];i++;if(i>=seq.length){RL.spin=false;drawStage()}else drawStage("show");if(i<seq.length){d=Math.min(d*1.13,210);setTimeout(tick,d)}})();
 }
 
 /* ---------- meilleurs grimpeurs ---------- */

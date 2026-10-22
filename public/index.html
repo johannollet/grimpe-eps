@@ -133,6 +133,7 @@ button.ck{cursor:pointer}
 .ck.off{opacity:.45;border-style:dashed}
 .chip .dots{display:inline-flex;gap:2px}.chip .dots i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+body.eleve .profonly{display:none!important}
 .lockbtn span{display:none;font-weight:700;font-size:13px}
 body.eleve .lockbtn{width:auto;padding:0 10px;gap:6px;display:inline-flex;align-items:center;background:var(--ink);color:var(--bg);border-color:var(--ink)}
 body.eleve .lockbtn span{display:inline}
@@ -325,7 +326,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="12.1 · dégaine atteinte";
+const APP_VERSION="13 · export séances";
 const COULEURS={rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -390,8 +391,9 @@ const classe=()=>S.classes.find(c=>c.id===S.classeId)||S.classes[0];
 const eleveById=id=>{for(const c of S.classes){const e=c.eleves.find(x=>x.id===id);if(e)return e}return null};
 const fullName=e=>e?`${e.prenom} ${e.nom}`.trim():"—";
 
-function stats(e,since){
-  const ps=S.passages.filter(p=>p.eleveId===e.id&&(!since||p.date>=since));
+function stats(e,since,until){
+  const inP=d=>(!since||d>=since)&&(!until||d<until);
+  const ps=S.passages.filter(p=>p.eleveId===e.id&&inP(p.date));
   const best={};let pts=0;
   for(const p of ps){const v=voieById(p.voieId);const x=passPts(p,v);
     if(S.reglages.uneFoisParVoie){if(!(p.voieId in best)||x>best[p.voieId])best[p.voieId]=x}else pts+=x}
@@ -401,11 +403,11 @@ function stats(e,since){
   let maxI=-1,maxC="—";for(const p of oks){const v=voieById(p.voieId);if(v&&cotIndex(v.cotation)>maxI){maxI=cotIndex(v.cotation);maxC=v.cotation}}
   const tete=new Set(oks.filter(p=>p.mode==="tete").map(p=>p.voieId)).size;
   const hauteur=Math.round(ps.reduce((a,p)=>{const v=voieById(p.voieId);if(!v)return a;if(p.res==="ok"||p.res==="repos")return a+(+v.hauteur||0);return a+Math.min(+v.hauteur||99,degH(v,p.deg))},0)*10)/10;
-  const assure=S.passages.filter(p=>p.assureurId===e.id&&(!since||p.date>=since)).length;
-  const bp=(S.blocPass||[]).filter(p=>p.eleveId===e.id&&(!since||p.date>=since));
+  const assure=S.passages.filter(p=>p.assureurId===e.id&&inP(p.date)).length;
+  const bp=(S.blocPass||[]).filter(p=>p.eleveId===e.id&&inP(p.date));
   const bok=[...new Set(bp.filter(p=>p.res==="ok").map(p=>p.blocId))].map(blocById).filter(Boolean);
   const bPts=bok.reduce((a,b)=>a+blocPts(b),0);const blocMax=bok.reduce((a,b)=>Math.max(a,+b.niveau||1),0);
-  const pev=progEvents(e).filter(x=>!since||x.date>=since);const PR=S.reglages.progres||{};
+  const pev=progEvents(e).filter(x=>inP(x.date));const PR=S.reglages.progres||{};
   const progPts=PR.on===false?0:pev.reduce((a,x)=>a+x.pts,0);
   return {pts:pts+bPts+progPts,ptsVoies:pts,blocPts:bPts,progPts,records:pev.filter(x=>x.t==="record").length,blocs:bok.length,blocMax,reussies,maxI,maxC,tete,hauteur,assure,essais:ps.length+bp.length}
 }
@@ -544,7 +546,7 @@ function vSeance(){
   const rl=recent.length?recent.map(p=>{if(p.bloc){const b=blocById(p.blocId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · bloc <b>${b?esc(b.nom):"supprimé"}</b> <span style="color:var(--gold)">${b?etoiles(b.niveau):""}</span></span><span class="tag ${p.res==="ok"?"ok":"ko"}">${p.res==="ok"?"Réussi":"Pas encore"}</span><span class="tag">+${p.res==="ok"&&b?blocPts(b):0}</span><button class="btn sm ghost" data-act="delbp" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}
     const v=voieById(p.voieId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · ${v?hold(v)+" "+esc(v.cotation):"voie supprimée"} · ${p.mode==="tete"?"en tête":"moulinette"}${p.assureurId?" · assuré par "+esc(fullName(eleveById(p.assureurId))):""}</span>
     <span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":p.deg!=null?"Non finie · "+degShort(p.deg):"Non finie"}</span><span class="tag">+${passPts(p,v)}</span>${recIds.has(p.id)?'<span class="tag" style="background:var(--gold);color:#1b1b1b">🏆 record</span>':""}<button class="btn sm ghost" data-act="delpass" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}).join(""):`<div class="empty">Aucun passage aujourd'hui. Touchez un élève pour noter une voie.</div>`;
-  return `<h2>Séance · ${esc(c.nom)}</h2>${strip}<p class="sub">Touchez un élève pour enregistrer une voie ou un bloc. G = permis grimper, A = foulard assureur (à sa couleur), T = tête.</p>
+  return `<div class="row" style="align-items:center"><h2 style="margin:0">Séance · ${esc(c.nom)}</h2><button class="btn sm profonly" data-act="export" style="margin-left:auto">Exporter Excel / PDF</button></div>${strip}<p class="sub">Touchez un élève pour enregistrer une voie ou un bloc. G = permis grimper, A = foulard assureur (à sa couleur), T = tête.</p>
   <div class="grid">${cards||'<div class="empty">Classe vide.</div>'}</div>
   <div class="lab" style="margin-top:22px">Passages du jour</div><div class="list">${rl}</div>`;
 }
@@ -1033,6 +1035,7 @@ function vDonnees(){
       <div class="row"><button class="sw" role="switch" aria-checked="${S.reglages.progres.on!==false}" data-act="progon" aria-label="Ajouter les points de progrès"></button><span>Ajouter les points de progrès au total</span></div>
       <div class="form"><label>1re voie en haut<input type="number" id="pPrem" value="${S.reglages.progres.premiere}"></label><label>Record de cotation<input type="number" id="pRec" value="${S.reglages.progres.record}"></label><label>1er bloc réussi<input type="number" id="pPB" value="${S.reglages.progres.premierBloc}"></label><label>Record de bloc<input type="number" id="pRB" value="${S.reglages.progres.recordBloc}"></label><label>Plus haut sur une voie non finie<input type="number" id="pPH" value="${S.reglages.progres.plusHaut}"></label></div>
       <button class="btn" data-act="savereg">Enregistrer le barème</button></div>
+    <div class="panel"><h3>Exporter les séances</h3><p>Une séance ou une période, pour une classe ou toutes : bilan par élève, détail des passages et des blocs. En Excel (.xlsx) ou en PDF.</p><div class="row"><button class="btn pri" data-act="export">Exporter…</button></div></div>
     <div class="panel"><h3>Sauvegarde &amp; classes</h3>
       <p>La sauvegarde contient classes, voies, plans du mur (photos comprises), permis et passages.</p>
       <div class="row"><button class="btn" data-act="backup">Télécharger la sauvegarde</button><button class="btn" data-act="pick" data-t="restore">Restaurer…</button></div>
@@ -1057,6 +1060,11 @@ document.addEventListener("click",ev=>{
   const c=classe();
   switch(a){
     case "close":closeModal();break;
+    case "export":openExport();break;
+    case "exmode":EX.mode=t.dataset.v;openExport();break;
+    case "exday":EX.day=t.dataset.v;openExport();break;
+    case "exxlsx":exRange();exportXlsx();break;
+    case "expdf":exRange();exportPdf();break;
     case "savemur":{S.reglages.mur={hauteur:+$("#mH").value||7,premiere:+$("#mP").value||3,ecart:+$("#mE").value||1};save();render();toast("Mur enregistré");break}
     case "murall":{const h=+$("#mH").value||mur().hauteur;S.reglages.mur=Object.assign(mur(),{hauteur:h});S.voies.forEach(v=>v.hauteur=String(h));save();render();toast(`Toutes les voies font maintenant ${h} m`);break}
     case "pkind":draft.kind=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
@@ -1186,6 +1194,7 @@ document.addEventListener("change",async ev=>{
   const t=ev.target;
   if(t.classList&&t.classList.contains("fdate")){const e=eleveById(t.dataset.id);if(!e)return;const k=t.dataset.k;
     if(k==="tete"||k==="grimper")e.permis.dates[k]=t.value;else{(e.permis.dates[k]=e.permis.dates[k]||{})[+e.permis[k]]=t.value}save();toast("Date enregistrée");return}
+  if(t.id==="exCls"){EX.cls=t.value;openExport();return}
   if(t.id==="bPhotoIn"){const f=t.files[0];if(!f)return;try{const f2=readBlocForm();BE.photo=await compressSmall(f);drawBlocEdit(f2)}catch(e){toast(e.message||"Photo illisible")}}
   if(t.id==="blocsIn"){const fs=[...t.files];if(!fs.length)return;toast(`Préparation de ${fs.length} photo${fs.length>1?"s":""}…`);let n=0;
     for(const f of fs){try{const img=await compressSmall(f);const base=f.name.replace(/\.[^.]+$/,"").trim();
@@ -1195,6 +1204,126 @@ document.addEventListener("change",async ev=>{
 });
 $("#classSel").onchange=e=>{S.classeId=e.target.value;save();render()};
 
+/* ---------- export des séances (Excel / PDF) ---------- */
+const dayOf=iso=>{const d=new Date(iso);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+const dayStart=day=>{const [y,m,d]=day.split("-").map(Number);return new Date(y,m-1,d).toISOString()};
+const dayEnd=day=>{const [y,m,d]=day.split("-").map(Number);return new Date(y,m-1,d+1).toISOString()};
+const frDay=day=>new Date(day+"T12:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+const hhmm=iso=>new Date(iso).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+let EX=null;
+function exClasses(){return EX.cls==="all"?S.classes:S.classes.filter(c=>c.id===EX.cls)}
+function exDays(){const ids=new Set(exClasses().flatMap(c=>c.eleves.map(e=>e.id)));
+  return [...new Set(S.passages.concat(S.blocPass||[]).filter(p=>ids.has(p.eleveId)).map(p=>dayOf(p.date)))].sort().reverse()}
+function openExport(){
+  if(!EX){const d=exDaysFor(S.classeId);EX={cls:S.classeId||"all",mode:"jour",day:d[0]||dayOf(new Date().toISOString()),from:"",to:""}}
+  const days=exDays();if(EX.mode==="jour"&&days.length&&!days.includes(EX.day))EX.day=days[0];
+  const frameNote=(()=>{try{return window.top!==window}catch(e){return true}})()?`<p class="warn">Dans l'aperçu Claude, les fichiers ne peuvent pas être téléchargés ni imprimés : utilisez la version en ligne.</p>`:"";
+  $("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Exporter les séances">
+    <div class="row"><h3>Exporter les séances</h3><button class="btn ghost" data-act="close" style="margin-left:auto">Fermer</button></div>
+    <div class="lab">Classe</div><select class="in" id="exCls" style="width:100%"><option value="all" ${EX.cls==="all"?"selected":""}>Toutes les classes</option>${S.classes.map(c=>`<option value="${c.id}" ${EX.cls===c.id?"selected":""}>${esc(c.nom)}</option>`).join("")}</select>
+    <div class="lab">Quoi ?</div><div class="seg"><button data-act="exmode" data-v="jour" aria-pressed="${EX.mode==="jour"}">Une séance</button><button data-act="exmode" data-v="periode" aria-pressed="${EX.mode==="periode"}">Une période</button></div>
+    ${EX.mode==="jour"?`<div class="lab">Séance du</div>${days.length?`<div class="chips">${days.slice(0,16).map(d=>`<button class="chip" data-act="exday" data-v="${d}" aria-pressed="${EX.day===d}">${new Date(d+"T12:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})}</button>`).join("")}</div>`:`<p class="sub">Aucune séance enregistrée pour cette sélection.</p>`}`
+      :`<div class="form" style="margin-top:8px"><label>Du<input type="date" id="exFrom" value="${esc(EX.from)}"></label><label>Au (inclus)<input type="date" id="exTo" value="${esc(EX.to)}"></label></div><p class="sub" style="margin:6px 0 0">Laissez vide pour tout exporter depuis le début.</p>`}
+    ${frameNote}
+    <div class="row" style="margin-top:16px"><button class="btn pri" data-act="exxlsx">Excel (.xlsx)</button><button class="btn pri" data-act="expdf">PDF</button></div>
+    <p class="sub" style="margin:8px 0 0">PDF : la fenêtre d'impression s'ouvre ; choisissez « Enregistrer au format PDF » (ou une imprimante).</p>
+  </div></div>`;
+}
+function exDaysFor(cid){const cs=cid?S.classes.filter(c=>c.id===cid):S.classes;const ids=new Set(cs.flatMap(c=>c.eleves.map(e=>e.id)));
+  return [...new Set(S.passages.concat(S.blocPass||[]).filter(p=>ids.has(p.eleveId)).map(p=>dayOf(p.date)))].sort().reverse()}
+function exRange(){
+  if(EX.mode==="jour")return {since:dayStart(EX.day),until:dayEnd(EX.day),titre:"Séance du "+frDay(EX.day),fichier:EX.day};
+  const f=($("#exFrom")||{}).value||EX.from,t=($("#exTo")||{}).value||EX.to;EX.from=f;EX.to=t;
+  return {since:f?dayStart(f):null,until:t?dayEnd(t):null,titre:f||t?`Période du ${f?new Date(f+"T12:00").toLocaleDateString("fr-FR"):"début"} au ${t?new Date(t+"T12:00").toLocaleDateString("fr-FR"):"aujourd'hui"}`:"Depuis le début",fichier:`${f||"debut"}_${t||dayOf(new Date().toISOString())}`};
+}
+function exData(){
+  const r=exRange();const inP=d=>(!r.since||d>=r.since)&&(!r.until||d<r.until);
+  const classes=exClasses();const out={r,classes:[]};
+  for(const c of classes){const ids=new Set(c.eleves.map(e=>e.id));
+    const pass=S.passages.filter(p=>ids.has(p.eleveId)&&inP(p.date)).sort((a,b)=>a.date.localeCompare(b.date));
+    const bps=(S.blocPass||[]).filter(p=>ids.has(p.eleveId)&&inP(p.date)).sort((a,b)=>a.date.localeCompare(b.date));
+    const recIds=new Map();c.eleves.forEach(e=>progEvents(e).forEach(x=>recIds.set(x.pid,x)));
+    const bilan=sortedEleves(c).map(e=>{const st=stats(e,r.since,r.until);const n=pass.filter(p=>p.eleveId===e.id).length+bps.filter(p=>p.eleveId===e.id).length;
+      const ev=progEvents(e).filter(x=>inP(x.date));return {e,st,n,ev}});
+    out.classes.push({c,pass,bps,bilan,recIds});
+  }
+  return out;
+}
+function passRow(p,recIds){const v=voieById(p.voieId);const e=eleveById(p.eleveId);const a=p.assureurId?eleveById(p.assureurId):null;
+  const h=v?(p.res==="echec"?Math.min(+v.hauteur||99,degH(v,p.deg)):(+v.hauteur||0)):0;const ev=recIds.get(p.id);
+  return {date:new Date(p.date).toLocaleDateString("fr-FR"),heure:hhmm(p.date),eleve:e?fullName(e):"?",num:v?v.num:"",couleur:v?v.couleur:"",cot:v?v.cotation:"(supprimée)",corde:v&&cordeKey(v)?cordeLabel(cordeKey(v)):"",
+    mode:p.mode==="tete"?"En tête":"Moulinette",res:p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":"Non finie",deg:p.res==="echec"&&p.deg!=null?degLab(p.deg):"",h,ass:a?fullName(a):"",pts:passPts(p,v),prog:ev?ev.label+` (+${ev.pts})`:""}}
+/* --- Excel (xlsx écrit à la main, sans bibliothèque) --- */
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zipStore(files){const enc=new TextEncoder();const parts=[],cen=[];let off=0;
+  for(const f of files){const name=enc.encode(f.name),data=typeof f.data==="string"?enc.encode(f.data):f.data,crc=crc32(data);
+    const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);lh.setUint16(26,name.length,true);
+    parts.push(new Uint8Array(lh.buffer),name,data);
+    const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);ch.setUint16(28,name.length,true);ch.setUint32(42,off,true);
+    cen.push(new Uint8Array(ch.buffer),name);off+=30+name.length+data.length}
+  const cenSize=cen.reduce((a,x)=>a+x.length,0);const end=new DataView(new ArrayBuffer(22));end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cenSize,true);end.setUint32(16,off,true);
+  return new Blob([...parts,...cen,new Uint8Array(end.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})}
+const xesc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"");
+function colName(i){let s="";i++;while(i){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=(i-m-1)/26}return s}
+function sheetXML(rows,titleRows){
+  const widths=[];rows.forEach(r=>r.forEach((v,i)=>{widths[i]=Math.min(60,Math.max(widths[i]||6,String(v??"").length+2))}));
+  const cols=`<cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols>`;
+  const body=rows.map((r,ri)=>`<row r="${ri+1}">${r.map((v,ci)=>{const ref=colName(ci)+(ri+1);const st=ri<titleRows?' s="1"':"";
+    return typeof v==="number"&&isFinite(v)?`<c r="${ref}"${st}><v>${v}</v></c>`:`<c r="${ref}" t="inlineStr"${st}><is><t xml:space="preserve">${xesc(v)}</t></is></c>`}).join("")}</row>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="${titleRows}" topLeftCell="A${titleRows+1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>${cols}<sheetData>${body}</sheetData></worksheet>`}
+function xlsxBlob(sheets){
+  const files=[{name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`},
+    {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+    {name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((sh,i)=>`<sheet name="${xesc(sh.name.replace(/[\\\/?*\[\]:]/g," ").slice(0,31))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")}</sheets></workbook>`},
+    {name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+    {name:"xl/styles.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1B2320"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`},
+    ...sheets.map((sh,i)=>({name:`xl/worksheets/sheet${i+1}.xml`,data:sheetXML(sh.rows,1)}))];
+  return zipStore(files)}
+function downloadBlob(name,blob){try{const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast("Fichier téléchargé : "+name)}catch(e){toast("Téléchargement impossible ici")}}
+function exportXlsx(){
+  const D=exData();const multi=D.classes.length>1;
+  const bil=[["Classe","Nom","Prénom","Passages","Voies enchaînées","Meilleure cotation","Mètres grimpés","Points","dont progrès","Records perso","Blocs réussis","Badges","Permis grimper","Foulard assureur"]];
+  const pas=[["Date","Heure","Classe","Élève","Voie n°","Couleur","Cotation","Corde","Mode","Résultat","Dégaine atteinte","Hauteur (m)","Assureur","Points","Progrès"]];
+  const blo=[["Date","Heure","Classe","Élève","Bloc","Niveau","Résultat","Points"]];
+  for(const K of D.classes){
+    K.bilan.forEach(b=>bil.push([K.c.nom,b.e.nom,b.e.prenom,b.n,b.st.reussies,b.st.maxC==="—"?"":b.st.maxC,b.st.hauteur,b.st.pts,b.st.progPts,b.ev.filter(x=>x.t==="record"||x.t==="plusHaut").length,b.st.blocs,badgesOf(b.e).length,b.e.permis.grimper?"oui":"non",fName(+b.e.permis.assurer||0)]));
+    K.pass.forEach(p=>{const r=passRow(p,K.recIds);pas.push([r.date,r.heure,K.c.nom,r.eleve,r.num,r.couleur,r.cot,r.corde,r.mode,r.res,r.deg,r.h,r.ass,r.pts,r.prog])});
+    K.bps.forEach(p=>{const b=blocById(p.blocId);const e=eleveById(p.eleveId);blo.push([new Date(p.date).toLocaleDateString("fr-FR"),hhmm(p.date),K.c.nom,e?fullName(e):"?",b?b.nom:"(supprimé)",b?+b.niveau||1:"",p.res==="ok"?"Réussi":"Pas encore",p.res==="ok"&&b?blocPts(b):0])});
+  }
+  const sheets=[{name:"Bilan élèves",rows:bil},{name:"Passages",rows:pas}];if(blo.length>1)sheets.push({name:"Blocs",rows:blo});
+  const nom=`grimpe_${multi?"toutes-classes":(D.classes[0]?D.classes[0].c.nom:"")}_${D.r.fichier}.xlsx`.replace(/[^\w.\-]+/g,"-");
+  downloadBlob(nom,xlsxBlob(sheets));
+}
+function reportHTML(){
+  const D=exData();
+  const css=`body{font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;color:#1b2320;margin:24px;font-size:12px}h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:28px;margin:0}h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:22px;margin:22px 0 6px;border-bottom:3px solid #d9482b;padding-bottom:2px}h3{font-size:14px;margin:14px 0 4px}
+    .sub{color:#5c6862;margin:2px 0 10px}.kpis{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}.kpi{border:1px solid #cfd6cf;border-radius:8px;padding:6px 10px}.kpi b{display:block;font-size:20px;font-family:"Barlow Condensed",sans-serif}
+    table{border-collapse:collapse;width:100%;margin-top:4px}th,td{border:1px solid #cfd6cf;padding:4px 6px;text-align:left;vertical-align:top}th{background:#1b2320;color:#fff;font-size:11px}tr:nth-child(even) td{background:#f3f5f2}td.n{text-align:right;font-variant-numeric:tabular-nums}
+    .dot{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid #0003;vertical-align:-1px;margin-right:4px}.rec{color:#b7791f;font-weight:700}.abs{color:#9aa29d}
+    .cls{break-before:page}.cls:first-of-type{break-before:auto}@page{margin:12mm}@media print{body{margin:0}}`;
+  let html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Grimpe EPS · ${esc(D.r.titre)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Atkinson+Hyperlegible:wght@400;700&display=swap"><style>${css}</style></head><body>`;
+  for(const K of D.classes){
+    const pres=K.bilan.filter(b=>b.n>0);const tops=K.pass.filter(p=>p.res==="ok"||p.res==="repos").length;const metres=Math.round(pres.reduce((a,b)=>a+b.st.hauteur,0));
+    const recs=pres.flatMap(b=>b.ev.map(x=>({b,x})));
+    html+=`<section class="cls"><h1>Grimpe EPS · ${esc(K.c.nom)}</h1><p class="sub">${esc(D.r.titre)} · édité le ${new Date().toLocaleDateString("fr-FR")}</p>
+      <div class="kpis"><div class="kpi"><b>${pres.length}/${K.c.eleves.length}</b>élèves actifs</div><div class="kpi"><b>${K.pass.length}</b>passages</div><div class="kpi"><b>${tops}</b>voies en haut</div><div class="kpi"><b>${metres} m</b>grimpés</div><div class="kpi"><b>${K.bps.filter(p=>p.res==="ok").length}</b>blocs réussis</div><div class="kpi"><b>${recs.length}</b>progrès</div></div>
+      <h2>Bilan par élève</h2><table><thead><tr><th>Élève</th><th>Passages</th><th>Voies en haut</th><th>Meilleure</th><th>Mètres</th><th>Points</th><th>Progrès</th><th>Blocs</th><th>Assureur</th></tr></thead><tbody>
+      ${K.bilan.map(b=>`<tr class="${b.n?"":"abs"}"><td><b>${esc(b.e.nom)}</b> ${esc(b.e.prenom)}</td><td class="n">${b.n||"—"}</td><td class="n">${b.st.reussies||"—"}</td><td>${b.st.maxC==="—"?"—":esc(b.st.maxC)}</td><td class="n">${b.st.hauteur?fr1(b.st.hauteur)+" m":"—"}</td><td class="n"><b>${b.st.pts||"—"}</b></td><td>${b.ev.map(x=>`<span class="rec">${esc(x.label)}</span>`).join("<br>")||""}</td><td class="n">${b.st.blocs||"—"}</td><td>${b.e.permis.assurer?`<span class="dot" style="background:${FOUL[b.e.permis.assurer].c}"></span>${FOUL[b.e.permis.assurer].n}`:"—"}</td></tr>`).join("")}</tbody></table>
+      ${K.pass.length?`<h2>Détail des passages</h2><table><thead><tr><th>${EX.mode==="jour"?"Heure":"Date"}</th><th>Élève</th><th>Voie</th><th>Mode</th><th>Résultat</th><th>Haut.</th><th>Assureur</th><th>Pts</th></tr></thead><tbody>
+      ${K.pass.map(p=>{const r=passRow(p,K.recIds);const v=voieById(p.voieId);return `<tr><td>${EX.mode==="jour"?r.heure:r.date}</td><td>${esc(r.eleve)}</td><td>${v?`<span class="dot" style="background:${couleurHex(v.couleur)}"></span>`:""}n°${esc(r.num)} <b>${esc(r.cot)}</b>${r.corde?" · "+esc(r.corde):""}</td><td>${r.mode}</td><td>${r.res}${r.deg?" ("+esc(r.deg)+")":""}${r.prog?`<br><span class="rec">${esc(r.prog)}</span>`:""}</td><td class="n">${r.h?fr1(r.h)+" m":""}</td><td>${esc(r.ass)}</td><td class="n">${r.pts}</td></tr>`}).join("")}</tbody></table>`:""}
+      ${K.bps.length?`<h2>Blocs</h2><table><thead><tr><th>${EX.mode==="jour"?"Heure":"Date"}</th><th>Élève</th><th>Bloc</th><th>Résultat</th><th>Pts</th></tr></thead><tbody>${K.bps.map(p=>{const b=blocById(p.blocId);const e=eleveById(p.eleveId);return `<tr><td>${EX.mode==="jour"?hhmm(p.date):new Date(p.date).toLocaleDateString("fr-FR")}</td><td>${esc(e?fullName(e):"?")}</td><td>${b?esc(b.nom)+" "+etoiles(b.niveau):"(supprimé)"}</td><td>${p.res==="ok"?"Réussi":"Pas encore"}</td><td class="n">${p.res==="ok"&&b?blocPts(b):0}</td></tr>`}).join("")}</tbody></table>`:""}
+    </section>`;
+  }
+  return html+`<script>window.onload=()=>setTimeout(()=>{window.focus();window.print()},400)<\/script></body></html>`;
+}
+function exportPdf(){
+  const html=reportHTML();
+  let w=null;try{w=window.open("","_blank")}catch(e){}
+  if(w&&w.document){w.document.open();w.document.write(html);w.document.close();return}
+  const f=document.createElement("iframe");f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0";document.body.appendChild(f);
+  f.srcdoc=html.replace("window.onload=()=>setTimeout(()=>{window.focus();window.print()},400)","");f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){toast("Impression impossible ici")}setTimeout(()=>f.remove(),60000)};
+}
 /* ---------- export ---------- */
 function toCSV(rows){return "﻿"+rows.map(r=>r.map(x=>{const s=String(x??"");return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(";")).join("\r\n")}
 function download(name,text,mime){try{const b=new Blob([text],{type:mime+";charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);toast("Fichier téléchargé : "+name)}catch(e){toast("Téléchargement impossible ici")}}

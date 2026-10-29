@@ -355,7 +355,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="14.1 · badges jeux";
+const APP_VERSION="14.2 · règles du défi";
 const COULEURS={multicolore:"multi",rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -574,7 +574,7 @@ function render(){
   const prof=isProf();if(!prof&&!ELEVE_TABS.includes(S.tab))S.tab="seance";
   document.body.classList.toggle("eleve",!prof);
   document.querySelectorAll("#tabs button").forEach(b=>{b.setAttribute("aria-selected",b.dataset.tab===S.tab);b.classList.toggle("locked",!prof&&!ELEVE_TABS.includes(b.dataset.tab))});
-  const lb=$("#lockBtn");if(lb){lb.title=lb.ariaLabel=prof?"Passer en mode élève (seules Séance, Roulette, Classement et Meilleurs grimpeurs restent ouvertes)":"Mode élève : touchez pour revenir en mode enseignant (code)";
+  const lb=$("#lockBtn");if(lb){lb.title=lb.ariaLabel=prof?"Passer en mode élève (seules Séance, Jeux & défis, Classement et Meilleurs grimpeurs restent ouvertes)":"Mode élève : touchez pour revenir en mode enseignant (code)";
     lb.querySelector(".shackle").setAttribute("d",prof?"M8 11V8a4 4 0 0 1 7.6-1.7":"M8 11V8a4 4 0 0 1 8 0v3")}
   const demoBar=S.demo&&prof?`<div class="notice"><span><b>Données d'exemple.</b> Importez vos classes et vos voies dans l'onglet Données.</span><button class="btn sm" data-act="cleardemo">Effacer l'exemple</button></div>`:"";
   $("#main").innerHTML=demoBar+({seance:vSeance,jeux:vJeux,roulette:vJeux,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,blocs:vBlocs,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
@@ -584,7 +584,7 @@ function vSeance(){
   const c=classe();
   if(!c)return `<div class="empty">Aucune classe. Importez vos élèves dans l'onglet <b>Données</b>.</div>`;
   const cards=sortedEleves(c).map(e=>{const s=stats(e);return `<button class="card" data-act="passage" data-id="${e.id}">
-    <span class="nm">${esc(e.prenom)}<small>${esc(e.nom)}</small></span>${(()=>{const t=teamOf(e.id);return t?`<span class="tchip" style="background:${t.c};color:${t.i}">Équipe ${esc(t.n)}</span>`:""})()}${pmBadges(e)}
+    <span class="nm">${esc(e.prenom)}<small>${esc(e.nom)}</small></span>${(()=>{const t=teamOf(e.id);if(!t)return "";const x=defiOfEleve(e.id);const tt=teamTurn(x.d,x.t);return `<span class="tchip" style="background:${t.c};color:${t.i}">Équipe ${esc(t.n)}${tt.next===e.id?" · à toi !":tt.bloque===e.id?" · pause":""}</span>`})()}${pmBadges(e)}
     <span class="st"><span class="pts">${s.pts}<small> pts</small></span><span class="lvl" title="Meilleure voie enchaînée">${esc(s.maxC)}</span></span>${(()=>{const n=badgesOf(e).length;return n?`<span class="bcount" title="Badges obtenus">🏅 ${n}</span>`:""})()}</button>`}).join("");
   const recToday=c.eleves.flatMap(e=>progEvents(e).filter(x=>x.date.slice(0,10)===today()&&(x.t==="record"||x.t==="premiere"||x.t==="plusHaut")).map(x=>({e,x})));
   const strip=recToday.length?`<div class="recstrip"><b>🏆 Records du jour</b>${recToday.map(({e,x})=>`<span class="tag" style="background:var(--surface)">${esc(e.prenom)} : ${x.t==="premiere"?"1re voie "+esc(x.a):x.t==="plusHaut"?"plus haut, "+esc(x.a):esc(x.de)+" → "+esc(x.a)}</span>`).join("")}</div>`:"";
@@ -620,8 +620,8 @@ function drawBlocPassage(e){
     ${choix}
     ${b?`<div class="stage">${b.photo?`<img class="bphoto" src="${b.photo}" alt="Bloc ${esc(b.nom)}">`:""}${b.defi?`<div class="defi"><b>Défi :</b> ${esc(b.defi)}</div>`:""}</div>`:""}
     <div class="lab">Résultat</div><div class="seg"><button data-act="bres" data-v="ok" aria-pressed="${(draft.bres||"ok")==="ok"}">Réussi</button><button data-act="bres" data-v="echec" aria-pressed="${draft.bres==="echec"}">Pas encore</button></div>
-    ${!e.permis.grimper?`<p class="warn">⚠ Cet élève n'a pas encore son permis grimper.</p>`:""}
-    <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><span style="margin-left:auto;color:var(--muted)">${b?`Bloc ${esc(b.nom)} → <b>+${(draft.bres||"ok")==="ok"?blocPts(b):0} pts</b>${doneB.has(b.id)?" (déjà réussi)":""}`:"Choisissez un bloc"}</span><button class="btn pri" data-act="savebp" ${b?"":"disabled"}>Enregistrer</button></div>
+    ${!e.permis.grimper?`<p class="warn">⚠ Cet élève n'a pas encore son permis grimper.</p>`:""}${guardHTML(e.id)}
+    <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><span style="margin-left:auto;color:var(--muted)">${b?`Bloc ${esc(b.nom)} → <b>+${(draft.bres||"ok")==="ok"?blocPts(b):0} pts</b>${doneB.has(b.id)?" (déjà réussi)":""}`:"Choisissez un bloc"}</span>${saveBtn(e.id,"savebp",!!b)}</div>
   </div></div>`;
   $("#modal .sheet").scrollTop=oldTop;
 }
@@ -668,8 +668,8 @@ function drawPassage(e){
       return `<div class="lab">Jusqu'où es-tu monté ?</div><div class="seg">${degaines(v).map(o=>`<button data-act="deg" data-v="${o.d}" aria-pressed="${+draft.deg===o.d}">${o.d===0.5?"Avant 1re":`${o.d===1?"1re":o.d+"e"} dég.`}<small style="display:block;font-weight:400;font-size:11px">${fr1(o.h)} m</small></button>`).join("")}</div>
         ${best>=0&&!topped?`<p class="sub" style="margin:6px 0 0">Meilleur essai sur cette voie : <b>${degLab(best)}</b>${draft.deg!=null&&+draft.deg>best?' · <b style="color:var(--ok)">plus haut !</b>':""}</p>`:""}`})():""}
     <div class="lab">Assureur</div><select class="in" id="assSel" style="width:100%"><option value="">— Non renseigné —</option>${ass}</select>
-    ${w.length?`<p class="warn">⚠ ${w.map(esc).join("<br>⚠ ")}</p>`:""}
-    <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><span style="margin-left:auto;color:var(--muted)">${v?`${esc(v.cotation)} → <b>+${prev} pts</b>`:"Choisissez une voie"}</span><button class="btn pri" data-act="savepass" ${v?"":"disabled"}>Enregistrer</button></div>
+    ${w.length?`<p class="warn">⚠ ${w.map(esc).join("<br>⚠ ")}</p>`:""}${guardHTML(e.id)}
+    <div class="row" style="margin-top:16px"><button class="btn ghost" data-act="close">Fermer</button><span style="margin-left:auto;color:var(--muted)">${v?`${esc(v.cotation)} → <b>+${prev} pts</b>`:"Choisissez une voie"}</span>${saveBtn(e.id,"savepass",!!v)}</div>
   </div></div>`;
   $("#assSel").onchange=ev=>{draft.assureurId=ev.target.value;drawPassage(e)};
   $("#modal .sheet").scrollTop=oldTop;
@@ -829,6 +829,20 @@ async function compressSmall(file){const r=await compressImg(file,900,.66);retur
 /* ---------- jeux & défis ---------- */
 const TEAMC=[{n:"Rouge",c:"#d7372b",i:"#fff"},{n:"Bleue",c:"#2a6fdb",i:"#fff"},{n:"Verte",c:"#2f9e4f",i:"#fff"},{n:"Jaune",c:"#f2c624",i:"#1b1b1b"},{n:"Violette",c:"#7b46c2",i:"#fff"},{n:"Orange",c:"#ef7d1a",i:"#1b1b1b"},{n:"Noire",c:"#1e1e1e",i:"#fff"},{n:"Rose",c:"#e65a9b",i:"#fff"}];
 const defiActif=cid=>(S.defis||[]).find(d=>d.classeId===cid&&!d.end);
+function defiOfEleve(eid){const c=S.classes.find(c=>c.eleves.some(e=>e.id===eid));const d=c&&defiActif(c.id);if(!d)return null;const t=d.equipes.find(t=>t.membres.includes(eid));return t?{d,t}:null}
+function teamPasses(d,t){const m=new Set(t.membres);return S.passages.concat(S.blocPass||[]).filter(p=>m.has(p.eleveId)&&p.date>=d.start&&(!d.end||p.date<d.end)).sort((a,b)=>a.date.localeCompare(b.date))}
+function teamTurn(d,t){const ps=teamPasses(d,t);const cnt={};t.membres.forEach(id=>cnt[id]=0);const last={};ps.forEach(p=>{cnt[p.eleveId]=(cnt[p.eleveId]||0)+1;last[p.eleveId]=p.date});
+  const n=ps.length;const bloque=n>=2&&ps[n-1].eleveId===ps[n-2].eleveId?ps[n-1].eleveId:null;
+  const next=t.membres.filter(id=>id!==bloque&&eleveById(id)).sort((a,b)=>(cnt[a]-cnt[b])||String(last[a]||"").localeCompare(String(last[b]||"")))[0]||null;
+  return {cnt,bloque,next,min:Math.min(...t.membres.map(id=>cnt[id]||0))}}
+function defiGuard(eid){const x=defiOfEleve(eid);if(!x)return null;const tt=teamTurn(x.d,x.t);const C=TEAMC[x.t.col];const nx=tt.next?eleveById(tt.next):null;
+  const blocked=tt.bloque===eid;const me=tt.cnt[eid]||0;const low=x.t.membres.filter(id=>id!==eid&&(tt.cnt[id]||0)<=me-2).map(id=>eleveById(id)).filter(Boolean);
+  return {blocked,msg:blocked?`Défi équipes : ${fullName(eleveById(eid))} vient de faire 2 passages de suite pour l'équipe ${C.n}. Un coéquipier doit passer avant${nx?` (à toi, ${nx.prenom} !)`:""}.`:"",
+    bal:!blocked&&low.length?`Équilibre l'équipe ${C.n} : ${low.map(e=>e.prenom).join(", ")} ${low.length>1?"ont":"a"} fait moins de passages.`:"",C}}
+function guardHTML(eid,act){const g=defiGuard(eid);if(!g)return "";
+  if(g.blocked)return `<p class="warn" style="color:var(--bad)">⛔ ${esc(g.msg)}</p>`;return g.bal?`<p class="warn">⚖️ ${esc(g.bal)}</p>`:""}
+function saveBtn(eid,act,ok){const g=defiGuard(eid);if(g&&g.blocked)return isProf()?`<button class="btn" data-act="${act}" data-force="1" ${ok?"":"disabled"}>Compter quand même</button>`:`<button class="btn pri" disabled>Au tour d'un coéquipier</button>`;
+  return `<button class="btn pri" data-act="${act}" ${ok?"":"disabled"}>Enregistrer</button>`}
 function teamOf(eid){const c=classe();const d=c&&defiActif(c.id);if(!d)return null;const t=d.equipes.find(t=>t.membres.includes(eid));return t?TEAMC[t.col]:null}
 let DF={critere:"points",mode:"homogene",nb:2,abs:new Set(),preview:null};
 function vJeux(){
@@ -865,7 +879,7 @@ function scoreboard(d){
       return `<div class="srow ${i===0&&x.val>0?"lead":""}"><span class="rk">${i===0&&x.val>0?"👑":i+1}</span><span class="tn"><span class="tchip" style="background:${C.c};color:${C.i};font-size:14px">${C.n}</span>${x.t.membres.length} élèves</span>
         <span class="sv">${fr1(avg?Math.round(x.val*10)/10:x.sc.tot)}<small> ${unit}${avg?" /élève":""}</small></span>
         <span class="bar"><i style="width:${Math.round(100*x.val/max)}%;background:${C.c}"></i></span>
-        <span class="who">${x.sc.det.map(m=>`<span><b>${esc(m.e.prenom)}</b> ${fr1(m.v)}</span>`).join("")}</span></div>`}).join("")}</div></div>`}).join("")
+        <span class="who">${(()=>{const tt=teamTurn(d,x.t);return x.sc.det.map(m=>`<span${!d.end&&tt.next===m.e.id?' style="background:var(--gold);color:#1b1b1b;border-radius:6px;padding:0 6px"':""}>${!d.end&&tt.next===m.e.id?"👉 ":""}<b>${esc(m.e.prenom)}</b> ${fr1(m.v)} <small>(${tt.cnt[m.e.id]||0} pass.)</small>${!d.end&&tt.bloque===m.e.id?" ⏸":""}</span>`).join("")})()}</span></div>`}).join("")}</div></div>`}).join("")
     +(avg?`<p class="sub" style="margin-top:8px">Les équipes n'ont pas le même nombre d'élèves : le classement se fait à la moyenne par élève.</p>`:"");
 }
 function vDefi(){
@@ -875,14 +889,14 @@ function vDefi(){
   const hist=past.length?`<div class="lab" style="margin-top:22px">Défis précédents</div><div class="list">${past.map(x=>`<div class="li"><span class="grow">${new Date(x.start).toLocaleDateString("fr-FR")} · ${x.critere==="metres"?"mètres":"points"} · ${x.mode==="niveau"?"équipes de niveau":"équipes homogènes"}</span>${(x.gagnants||[]).map(g=>`<span class="tchip" style="background:${TEAMC[g].c};color:${TEAMC[g].i}">🏆 ${TEAMC[g].n}</span>`).join("")}<button class="btn sm ghost profonly" data-act="defivoir" data-id="${x.id}">Voir</button></div>`).join("")}</div>`:"";
   if(d){
     return `<div class="row" style="align-items:center"><h2 style="margin:0">Défi équipes · ${esc(c.nom)}</h2><span class="tag ok">● en cours</span></div>
-    <p class="sub">Depuis ${hhmm(d.start)} · ${d.critere==="metres"?"mètres grimpés":"points cumulés (voies, blocs et progrès)"} · ${d.mode==="niveau"?"équipes de niveau, par poule":"équipes homogènes"}. Les passages notés en séance comptent automatiquement.</p>
+    <p class="sub">Depuis ${hhmm(d.start)} · ${d.critere==="metres"?"mètres grimpés":"points cumulés (voies, blocs et progrès)"} · ${d.mode==="niveau"?"équipes de niveau, par poule":"équipes homogènes"}. Les passages notés en séance comptent automatiquement. Règles : 2 passages de suite maximum par élève, puis un coéquipier passe (👉 = à qui le tour) ; essayez d'équilibrer les passages.</p>
     <div class="row" style="margin-bottom:6px"><button class="btn" data-act="tv">${document.body.classList.contains("tv")?"Quitter le grand écran":"Grand écran"}</button><button class="btn pri profonly" data-act="defiend" style="margin-left:auto">Terminer le défi</button><button class="btn ghost profonly" data-act="defidel">Annuler</button></div>
     ${scoreboard(d)}${hist}`;
   }
   if(!isProf())return `<h2>Défi équipes</h2><div class="empty">Pas de défi en cours. Le professeur peut en lancer un.</div>${hist}`;
   const pres=sortedEleves(c).filter(e=>!DF.abs.has(e.id));
-  const nbOpts=(DF.mode==="niveau"?[4,6,8]:[2,3,4,5,6]).filter(n=>n<=Math.max(2,pres.length));
-  if(!nbOpts.includes(DF.nb))DF.nb=nbOpts[0]||2;
+  const nbOpts=(DF.mode==="niveau"?[4,6,8]:[2,3,4,5,6]).filter(n=>Math.floor(pres.length/n)>=3);
+  if(!nbOpts.includes(DF.nb))DF.nb=nbOpts[0]||0;
   const prev=DF.preview;
   const teamsHTML=prev?(()=>{const poules=[...new Set(prev.map(t=>t.poule))].sort();return poules.map(pi=>`<div class="poule">${poules.length>1?`<h3>Poule ${pi+1}${pi===0?" · les plus forts":pi===poules.length-1?" · les plus légers":""}</h3>`:""}<div class="teams">${prev.filter(t=>t.poule===pi).map(t=>{const C=TEAMC[t.col];
     return `<div class="team"><h4 style="background:${C.c};color:${C.i}">Équipe ${C.n}<small style="margin-left:auto;font-size:14px">${t.membres.length}</small></h4><div class="mbrs">${t.membres.map(id=>{const e=eleveById(id);const st=stats(e);return `<button data-act="dfmove" data-id="${id}" title="Changer d'équipe">${esc(e.prenom)} <small style="font-weight:400">${esc(st.maxC)}</small></button>`}).join("")}</div></div>`}).join("")}</div></div>`).join("")})():"";
@@ -891,9 +905,9 @@ function vDefi(){
     <div class="chips">${sortedEleves(c).map(e=>`<button class="chip" data-act="dfabs" data-id="${e.id}" aria-pressed="${!DF.abs.has(e.id)}">${esc(e.prenom)} ${esc(e.nom.charAt(0))}.</button>`).join("")}</div>
     <div class="lab">Type d'équipes</div><div class="seg"><button data-act="dfmode" data-v="homogene" aria-pressed="${DF.mode==="homogene"}">Homogènes (toutes s'affrontent)</button><button data-act="dfmode" data-v="niveau" aria-pressed="${DF.mode==="niveau"}">De niveau (poules)</button></div>
     <p class="sub" style="margin:6px 0 0">${DF.mode==="homogene"?"Chaque équipe mélange forts et moins forts : forces équilibrées.":"Les élèves sont répartis par niveau en poules ; dans chaque poule, deux équipes de même niveau s'affrontent."}</p>
-    <div class="lab">Nombre d'équipes</div><div class="seg">${nbOpts.map(n=>`<button data-act="dfnb" data-v="${n}" aria-pressed="${DF.nb===n}">${n}</button>`).join("")}</div>
+    <div class="lab">Nombre d'équipes · 3 élèves minimum par équipe</div>${nbOpts.length?`<div class="seg">${nbOpts.map(n=>`<button data-act="dfnb" data-v="${n}" aria-pressed="${DF.nb===n}">${n}</button>`).join("")}</div>`:`<p class="warn">Il faut au moins ${DF.mode==="niveau"?12:6} élèves présents pour ce type de défi (équipes de 3 minimum${DF.mode==="niveau"?", 2 poules de 2 équipes":""}).</p>`}
     <div class="lab">Compétition sur</div><div class="seg"><button data-act="dfcrit" data-v="points" aria-pressed="${DF.critere==="points"}">Points cumulés</button><button data-act="dfcrit" data-v="metres" aria-pressed="${DF.critere==="metres"}">Mètres grimpés</button></div>
-    <div class="row" style="margin-top:14px"><button class="btn pri" data-act="dfmake">${prev?"Refaire les équipes":"Former les équipes"}</button>${prev?`<button class="btn" data-act="dfshuffle">Mélanger</button>`:""}</div>
+    <div class="row" style="margin-top:14px"><button class="btn pri" data-act="dfmake" ${nbOpts.length?"":"disabled"}>${prev?"Refaire les équipes":"Former les équipes"}</button>${prev?`<button class="btn" data-act="dfshuffle">Mélanger</button>`:""}</div>
     ${prev?`<p class="sub" style="margin:10px 0 0">Touchez un élève pour le faire passer dans l'équipe suivante${DF.mode==="niveau"?" de sa poule":""}.</p>${teamsHTML}<div class="row" style="margin-top:14px"><button class="spinbtn" data-act="dfstart" style="max-width:360px"><span class="wheel" aria-hidden="true" style="display:grid;place-items:center;font-size:38px">🏁</span><span class="lbl">Lancer le défi<small>${DF.critere==="metres"?"aux mètres grimpés":"aux points cumulés"}</small></span></button></div>`:""}
     ${hist}`;
 }
@@ -1200,10 +1214,11 @@ document.addEventListener("click",ev=>{
     case "dfmode":DF.mode=t.dataset.v;DF.preview=null;render();break;
     case "dfnb":DF.nb=+t.dataset.v;DF.preview=null;render();break;
     case "dfcrit":DF.critere=t.dataset.v;render();break;
-    case "dfmake":case "dfshuffle":{const ids=sortedEleves(c).filter(e=>!DF.abs.has(e.id)).map(e=>e.id);if(ids.length<2)return toast("Il faut au moins 2 élèves présents");
+    case "dfmake":case "dfshuffle":{const ids=sortedEleves(c).filter(e=>!DF.abs.has(e.id)).map(e=>e.id);if(!DF.nb||Math.floor(ids.length/DF.nb)<3)return toast("Pas assez d'élèves pour des équipes de 3");
       DF.preview=makeTeams(ids,DF.nb,DF.mode,a==="dfshuffle");render();break}
     case "dfmove":{const T=DF.preview;const from=T.find(t=>t.membres.includes(id));const same=T.filter(t=>t.poule===from.poule);const to=same[(same.indexOf(from)+1)%same.length];
-      if(to===from)return;from.membres=from.membres.filter(x=>x!==id);to.membres.push(id);render();break}
+      if(to===from)return;if(from.membres.length<=3)return toast("3 élèves minimum par équipe : déplacez d'abord quelqu'un vers cette équipe");
+      from.membres=from.membres.filter(x=>x!==id);to.membres.push(id);render();break}
     case "dfstart":{if(defiActif(c.id))return toast("Un défi est déjà en cours");const d={id:uid(),classeId:c.id,start:new Date().toISOString(),end:null,critere:DF.critere,mode:DF.mode,equipes:DF.preview.map(t=>({id:t.id,col:t.col,poule:t.poule,membres:t.membres.slice()}))};
       S.defis.push(d);DF.preview=null;save();render();window.scrollTo(0,0);toast("C'est parti ! Le défi est lancé");break}
     case "defiend":{const d=defiActif(c.id);if(d)ask("Terminer le défi et annoncer les vainqueurs ?",()=>endDefi(d));break}
@@ -1220,7 +1235,7 @@ document.addEventListener("click",ev=>{
     case "bview":S.blocView=t.dataset.v;saveLocal();drawPassage(eleveById(draft.eleveId));break;
     case "pickbloc":if(draft){draft.blocId=id;drawPassage(eleveById(draft.eleveId))}break;
     case "bres":draft.bres=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
-    case "savebp":{const b=blocById(draft.blocId);if(!b)return;const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,blocId:b.id,res:draft.bres||"ok",date:new Date().toISOString()};
+    case "savebp":{if(!t.dataset.force){const g=defiGuard(draft.eleveId);if(g&&g.blocked)return toast(g.msg)}const b=blocById(draft.blocId);if(!b)return;const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,blocId:b.id,res:draft.bres||"ok",date:new Date().toISOString()};
       const el=eleveById(p.eleveId);const bb=new Set(badgesOf(el));
       S.blocPass.push(p);save();closeModal();render();toast(p.res==="ok"?`${fullName(el)} : bloc ${b.nom} réussi !`:"Essai noté");
       celebrate(el,progEvents(el).filter(x=>x.pid===p.id),badgesOf(el).filter(x=>!bb.has(x)));break}
@@ -1246,7 +1261,7 @@ document.addEventListener("click",ev=>{
       S.blocPass.push({id:uid(),classeId:c.id,eleveId:eid,blocId:id,res:t.dataset.r,date:new Date().toISOString()});save();render();openBloc(id);
       toast(t.dataset.r==="ok"?`${fullName(eleveById(eid))} : bloc ${b.nom} réussi ! +${blocPts(b)} pts`:"Essai noté");break}
     case "syncnow":syncNow();break;
-    case "lock":if(isProf()){closeModal();SY.prof=false;persistSY();render();window.scrollTo(0,0);toast("Mode élève : Séance, Roulette, Classement et Meilleurs grimpeurs")}
+    case "lock":if(isProf()){closeModal();SY.prof=false;persistSY();render();window.scrollTo(0,0);toast("Mode élève : Séance, Jeux & défis, Classement et Meilleurs grimpeurs")}
       else askProf(()=>{render();toast("Mode enseignant")});break;
     case "savecode":{const o=$("#cOld").value.trim(),n=$("#cNew").value.trim(),n2=$("#cNew2").value.trim();
       if(!/^\d{4,8}$/.test(n))return toast("Le nouveau code doit faire 4 à 8 chiffres");if(n!==n2)return toast("Les deux nouveaux codes sont différents");
@@ -1260,7 +1275,7 @@ document.addEventListener("click",ev=>{
     case "mode":draft.mode=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
     case "res":draft.res=t.dataset.v;if(draft.res!=="echec")delete draft.deg;drawPassage(eleveById(draft.eleveId));break;
     case "deg":draft.deg=+t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
-    case "savepass":{const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,voieId:draft.voieId,mode:draft.mode,res:draft.res,...(draft.roulVoie&&draft.roulVoie===draft.voieId?{roul:true}:{}),...(draft.res==="echec"&&draft.deg!=null?{deg:draft.deg}:{}),assureurId:draft.assureurId||null,date:new Date().toISOString()};
+    case "savepass":{if(!t.dataset.force){const g=defiGuard(draft.eleveId);if(g&&g.blocked)return toast(g.msg)}const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,voieId:draft.voieId,mode:draft.mode,res:draft.res,...(draft.roulVoie&&draft.roulVoie===draft.voieId?{roul:true}:{}),...(draft.res==="echec"&&draft.deg!=null?{deg:draft.deg}:{}),assureurId:draft.assureurId||null,date:new Date().toISOString()};
       const el=eleveById(p.eleveId);const bb=new Set(badgesOf(el));
       S.passages.push(p);save();const pts=passPts(p,voieById(p.voieId));closeModal();render();toast(p.res==="echec"?`${fullName(el)} : essai noté${p.deg!=null?` (${degLab(p.deg)}, ${fr1(degH(voieById(p.voieId),p.deg))} m)`:""}`:`${fullName(el)} : +${pts} pts`);
       celebrate(el,progEvents(el).filter(x=>x.pid===p.id),badgesOf(el).filter(x=>!bb.has(x)));break}

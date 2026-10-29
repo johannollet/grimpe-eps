@@ -355,7 +355,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="14 · jeux & défis";
+const APP_VERSION="14.1 · badges jeux";
 const COULEURS={multicolore:"multi",rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -488,14 +488,27 @@ const BADGES=[
   {id:"bloc3",ic:"🧩",n:"Bloqueur",d:"Réussir 3 blocs",t:x=>x.blocs>=3},
   {id:"assure10",ic:"🤝",n:"Assureur de confiance",d:"Assurer 10 fois",t:x=>x.assure>=10},
   {id:"foulard",ic:"🧣",n:"Foulard rouge",d:"Obtenir le foulard assureur rouge",t:(x,e)=>(+e.permis.assurer||0)>=4},
+  {id:"roul1",ic:"🎲",n:"Coup de chance",d:"Enchaîner une voie tirée à la roulette",t:x=>x.roul>=1},
+  {id:"roul5",ic:"🎡",n:"Roi de la roulette",d:"Enchaîner 5 voies tirées à la roulette",t:x=>x.roul>=5},
+  {id:"defi1",ic:"🏆",n:"Champion d'équipe",d:"Gagner un défi équipes",t:x=>x.defisG>=1},
+  {id:"defi3",ic:"🥇",n:"Triple champion",d:"Gagner 3 défis équipes",t:x=>x.defisG>=3},
+  {id:"meneur",ic:"🌟",n:"Moteur de l'équipe",d:"Meilleur contributeur de son équipe dans un défi",t:x=>x.meneur>=1},
 ];
+let AWC={k:"",m:null};
+function defiAwards(){const ended=(S.defis||[]).filter(d=>d.end);const k=ended.map(d=>d.id+d.end).join()+"|"+S.passages.length+"|"+(S.blocPass||[]).length;
+  if(AWC.k===k&&AWC.m)return AWC.m;const m=new Map();const g=id=>{if(!m.has(id))m.set(id,{g:0,m:0});return m.get(id)};
+  ended.forEach(d=>d.equipes.forEach(t=>{const win=(d.gagnants||[]).includes(t.col);const sc=teamScore(t,d);const top=sc.det.length?sc.det[0].v:0;
+    t.membres.forEach(id=>{if(win)g(id).g++});if(top>0)sc.det.filter(x=>x.v===top).forEach(x=>g(x.e.id).m++)}));
+  AWC={k,m};return m}
 function badgesOf(e){
   const s=stats(e);const ps=S.passages.filter(p=>p.eleveId===e.id);
   const okV=ps.filter(p=>p.res==="ok").map(p=>voieById(p.voieId)).filter(Boolean);
   const jours=new Set(ps.concat((S.blocPass||[]).filter(p=>p.eleveId===e.id)).map(p=>p.date.slice(0,10))).size;
   const byV={};ps.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>(byV[p.voieId]=byV[p.voieId]||[]).push(p));
   const perse=Object.values(byV).some(a=>{const i=a.findIndex(p=>p.res==="ok");return i>=2&&a.slice(0,i).filter(p=>p.res!=="ok").length>=2});
-  const x=Object.assign({},s,{recordsAll:progEvents(e).filter(v=>v.t==="record").length,jours,perse,couleurs:new Set(okV.map(v=>norm(v.couleur))).size});
+  const roul=new Set(ps.filter(p=>p.roul&&(p.res==="ok"||p.res==="repos")).map(p=>p.voieId)).size;
+  const aw=defiAwards().get(e.id)||{g:0,m:0};const defisG=aw.g,meneur=aw.m;
+  const x=Object.assign({},s,{recordsAll:progEvents(e).filter(v=>v.t==="record").length,jours,perse,roul,defisG,meneur,couleurs:new Set(okV.map(v=>norm(v.couleur))).size});
   return BADGES.filter(b=>b.t(x,e)).map(b=>b.id);
 }
 function badgesHTML(e,compact){const have=new Set(badgesOf(e));
@@ -580,7 +593,7 @@ function vSeance(){
   const recent=S.passages.concat((S.blocPass||[]).map(p=>Object.assign({bloc:true},p))).filter(p=>ids.has(p.eleveId)&&p.date.slice(0,10)===today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(-12).reverse();
   const rl=recent.length?recent.map(p=>{if(p.bloc){const b=blocById(p.blocId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · bloc <b>${b?esc(b.nom):"supprimé"}</b> <span style="color:var(--gold)">${b?etoiles(b.niveau):""}</span></span><span class="tag ${p.res==="ok"?"ok":"ko"}">${p.res==="ok"?"Réussi":"Pas encore"}</span><span class="tag">+${p.res==="ok"&&b?blocPts(b):0}</span><button class="btn sm ghost" data-act="delbp" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}
     const v=voieById(p.voieId);const e=eleveById(p.eleveId);return `<div class="li"><span class="grow"><b>${esc(fullName(e))}</b> · ${v?hold(v)+" "+esc(v.cotation):"voie supprimée"} · ${p.mode==="tete"?"en tête":"moulinette"}${p.assureurId?" · assuré par "+esc(fullName(eleveById(p.assureurId))):""}</span>
-    <span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":p.deg!=null?"Non finie · "+degShort(p.deg):"Non finie"}</span><span class="tag">+${passPts(p,v)}</span>${recIds.has(p.id)?'<span class="tag" style="background:var(--gold);color:#1b1b1b">🏆 record</span>':""}<button class="btn sm ghost" data-act="delpass" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}).join(""):`<div class="empty">Aucun passage aujourd'hui. Touchez un élève pour noter une voie.</div>`;
+    <span class="tag ${p.res==="ok"?"ok":p.res==="repos"?"rp":"ko"}">${p.res==="ok"?"Enchaînée":p.res==="repos"?"Avec repos":p.deg!=null?"Non finie · "+degShort(p.deg):"Non finie"}</span><span class="tag">+${passPts(p,v)}</span>${p.roul?'<span class="tag" title="Voie tirée à la roulette">🎡</span>':""}${recIds.has(p.id)?'<span class="tag" style="background:var(--gold);color:#1b1b1b">🏆 record</span>':""}<button class="btn sm ghost" data-act="delpass" data-id="${p.id}" aria-label="Annuler ce passage">Annuler</button></div>`}).join(""):`<div class="empty">Aucun passage aujourd'hui. Touchez un élève pour noter une voie.</div>`;
   return `<div class="row" style="align-items:center"><h2 style="margin:0">Séance · ${esc(c.nom)}</h2><button class="btn sm profonly" data-act="export" style="margin-left:auto">Exporter Excel / PDF</button></div>${strip}<p class="sub">Touchez un élève pour enregistrer une voie ou un bloc. G = permis grimper, A = foulard assureur (à sa couleur), T = tête.</p>
   <div class="grid">${cards||'<div class="empty">Classe vide.</div>'}</div>
   <div class="lab" style="margin-top:22px">Passages du jour</div><div class="list">${rl}</div>`;
@@ -892,7 +905,8 @@ function endDefi(d){
   const el=document.createElement("div");el.className="celebrate";
   el.innerHTML=`<canvas></canvas><div class="celcard"><div class="celt">${d.gagnants.length>1?"Vainqueurs !":"Victoire !"}</div>
     <div class="celb" style="margin-top:14px">${d.gagnants.map(g=>`<span class="tchip" style="background:${TEAMC[g].c};color:${TEAMC[g].i};font-size:24px;padding:6px 16px">Équipe ${TEAMC[g].n}</span>`).join("")}</div>
-    <div class="sub" style="margin:12px 0 0">${d.critere==="metres"?"aux mètres grimpés":"aux points cumulés"} · touchez pour continuer</div></div>`;
+    <div class="celb" style="margin-top:12px"><span class="badge got"><span class="bi">🏆</span><span class="bn">Champion d'équipe</span></span><span class="badge got"><span class="bi">🌟</span><span class="bn">Moteur de l'équipe</span></span></div>
+    <div class="sub" style="margin:10px 0 0">Badges gagnés par les vainqueurs et par le meilleur contributeur de chaque équipe · ${d.critere==="metres"?"aux mètres grimpés":"aux points cumulés"}</div></div>`;
   document.body.appendChild(el);el.onclick=()=>el.remove();setTimeout(()=>el.remove(),8000);
   if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)){const cv=el.querySelector("canvas");const cx=cv.getContext("2d");const W=cv.width=innerWidth,H=cv.height=innerHeight;
     const cols=d.gagnants.map(g=>TEAMC[g].c).concat(["#f2c624","#ffffff"]);const P=Array.from({length:160},()=>({x:Math.random()*W,y:-20-Math.random()*H*.5,vx:(Math.random()-.5)*3,vy:Math.random()*3+2,r:Math.random()*6+3,c:cols[Math.random()*cols.length|0],a:Math.random()*6}));
@@ -1246,7 +1260,7 @@ document.addEventListener("click",ev=>{
     case "mode":draft.mode=t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
     case "res":draft.res=t.dataset.v;if(draft.res!=="echec")delete draft.deg;drawPassage(eleveById(draft.eleveId));break;
     case "deg":draft.deg=+t.dataset.v;drawPassage(eleveById(draft.eleveId));break;
-    case "savepass":{const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,voieId:draft.voieId,mode:draft.mode,res:draft.res,...(draft.res==="echec"&&draft.deg!=null?{deg:draft.deg}:{}),assureurId:draft.assureurId||null,date:new Date().toISOString()};
+    case "savepass":{const p={id:uid(),classeId:c.id,eleveId:draft.eleveId,voieId:draft.voieId,mode:draft.mode,res:draft.res,...(draft.roulVoie&&draft.roulVoie===draft.voieId?{roul:true}:{}),...(draft.res==="echec"&&draft.deg!=null?{deg:draft.deg}:{}),assureurId:draft.assureurId||null,date:new Date().toISOString()};
       const el=eleveById(p.eleveId);const bb=new Set(badgesOf(el));
       S.passages.push(p);save();const pts=passPts(p,voieById(p.voieId));closeModal();render();toast(p.res==="echec"?`${fullName(el)} : essai noté${p.deg!=null?` (${degLab(p.deg)}, ${fr1(degH(voieById(p.voieId),p.deg))} m)`:""}`:`${fullName(el)} : +${pts} pts`);
       celebrate(el,progEvents(el).filter(x=>x.pid===p.id),badgesOf(el).filter(x=>!bb.has(x)));break}
@@ -1257,7 +1271,7 @@ document.addEventListener("click",ev=>{
     case "rexcl":if(RL.spin)return;RL.excl=!RL.excl;RL.res=RL.cur=null;render();break;
     case "spin":if(!RL.spin)spin();break;
     case "rplan":RL.planId=id;drawStage();break;
-    case "rnoter":{const e=eleveById(RL.eleveId);if(!e||!RL.res)return;openPassage(e.id);draft.voieId=RL.res.id;draft.corde=cordeKey(RL.res)||"";drawPassage(e);break}
+    case "rnoter":{const e=eleveById(RL.eleveId);if(!e||!RL.res)return;openPassage(e.id);draft.voieId=RL.res.id;draft.roulVoie=RL.res.id;draft.corde=cordeKey(RL.res)||"";drawPassage(e);break}
     case "topper":S.topPer=t.dataset.v;save();render();break;
     case "topniv":S.topNiv=t.dataset.v;save();render();break;
     case "tv":{const on=!document.body.classList.contains("tv");document.body.classList.toggle("tv",on);

@@ -133,6 +133,35 @@ button.ck{cursor:pointer}
 .ck.off{opacity:.45;border-style:dashed}
 .chip .dots{display:inline-flex;gap:2px}.chip .dots i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.tchip{align-self:flex-start;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px}
+.jmenu{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:8px}
+.jcard{border:0;border-radius:18px;padding:22px;text-align:left;color:#fff;display:flex;flex-direction:column;gap:6px;min-height:170px;box-shadow:0 6px 0 rgba(0,0,0,.18);cursor:pointer;position:relative;overflow:hidden}
+.jcard b{font-family:var(--display);font-size:34px;line-height:1;text-transform:uppercase;letter-spacing:.5px}
+.jcard span{font-size:15px;opacity:.95;max-width:30ch}
+.jcard i{position:absolute;right:-10px;bottom:-18px;font-style:normal;font-size:110px;opacity:.25;line-height:1}
+.jcard:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.jcard .live{display:inline-block;align-self:flex-start;background:#fff;color:#1b2320;font-weight:700;font-size:12px;padding:3px 10px;border-radius:99px}
+.backbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.team{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;min-width:0}
+.team h4{margin:0;padding:8px 12px;font-family:var(--display);font-size:22px;display:flex;align-items:center;gap:8px}
+.team .mbrs{display:flex;flex-wrap:wrap;gap:6px;padding:10px}
+.team .mbrs button,.team .mbrs span{border:1px solid var(--line);background:var(--surface2);border-radius:99px;padding:4px 10px;font-size:13px;font-weight:700}
+.poule{margin-top:14px}
+.poule>h3{font-family:var(--display);font-size:20px;margin:0 0 6px}
+.score{display:flex;flex-direction:column;gap:10px}
+.srow{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:10px 12px;display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center}
+.srow .rk{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;width:34px;text-align:center}
+.srow .tn{font-family:var(--display);font-weight:800;font-size:24px;line-height:1;display:flex;align-items:center;gap:8px}
+.srow .sv{font-family:var(--display);font-weight:800;font-size:38px;line-height:1;font-variant-numeric:tabular-nums;text-align:right}
+.srow .sv small{font-size:15px;color:var(--muted)}
+.srow .bar{grid-column:1/-1;height:12px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.srow .bar i{display:block;height:100%;border-radius:99px;transition:width .6s}
+.srow .who{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px;color:var(--muted)}
+.srow .who b{color:var(--ink)}
+.srow.lead{border:2px solid var(--gold)}
+body.tv .srow .sv{font-size:60px}body.tv .srow .tn{font-size:36px}
+@media (prefers-reduced-motion:reduce){.srow .bar i{transition:none}}
 body.eleve .profonly{display:none!important}
 .lockbtn span{display:none;font-weight:700;font-size:13px}
 body.eleve .lockbtn{width:auto;padding:0 10px;gap:6px;display:inline-flex;align-items:center;background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -308,7 +337,7 @@ body.tv .notice{display:none}
   </div>
   <nav role="tablist" id="tabs">
     <button data-tab="seance" role="tab">Séance</button>
-    <button data-tab="roulette" role="tab">Roulette</button>
+    <button data-tab="jeux" role="tab">Jeux &amp; défis</button>
     <button data-tab="classement" role="tab">Classement</button>
     <button data-tab="top" role="tab">Meilleurs grimpeurs</button>
     <button data-tab="eleves" role="tab">Élèves &amp; foulards</button>
@@ -326,7 +355,7 @@ body.tv .notice{display:none}
 "use strict";
 /* ---------- stockage ---------- */
 const KEY="grimpe-eps-v1";
-const APP_VERSION="13.1 · voies multicolores";
+const APP_VERSION="14 · jeux & défis";
 const COULEURS={multicolore:"multi",rouge:"#d7372b",orange:"#ef7d1a",jaune:"#f2c624",vert:"#2f9e4f","vert clair":"#7cc455","vert fonce":"#1e6b35",bleu:"#2a6fdb","bleu clair":"#5fb4ec","bleu fonce":"#1c3f8f",violet:"#7b46c2",mauve:"#a77bd4",rose:"#e65a9b",fuchsia:"#c21f7a",noir:"#1e1e1e",blanc:"#f7f7f2",gris:"#8a8f8c",marron:"#8a5a33",turquoise:"#1aa6a0",beige:"#d9c6a0",or:"#c9a227",kaki:"#7a7a3a"};
 let S=null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -366,7 +395,7 @@ function limite(l){const m=mur();const fr=n=>String(n).replace(".",",");
   return ["",`jusqu'à la 1re dégaine (${fr(m.premiere)} m) en dalle ou mur vertical`,`jusqu'à la 2e dégaine (${fr(+m.premiere+ +m.ecart)} m) en dalle ou mur vertical`,`jusqu'en haut (${fr(m.hauteur)} m) en dalle ou mur vertical`,"partout, y compris dans le dévers"][l]||""}
 function fixReg(r){r=Object.assign({bonusTete:50,repos:50,uneFoisParVoie:true},r||{});r.progres=Object.assign({on:true,premiere:20,record:15,premierBloc:10,recordBloc:10,plusHaut:5},r.progres||{});return r}
 function migrate(){
-  S.plans=S.plans||[];S.pos=S.pos||{};S.blocs=S.blocs||[];S.blocPass=S.blocPass||[];
+  S.plans=S.plans||[];S.pos=S.pos||{};S.blocs=S.blocs||[];S.blocPass=S.blocPass||[];S.defis=S.defis||[];if(S.tab==="roulette"){S.tab="jeux";S.jeuxView="roulette"}
   (S.classes||[]).forEach(c=>c.eleves.forEach(e=>{const p=e.permis=e.permis||{};
     if(p.assurer===true)p.assurer=1;else if(!p.assurer)p.assurer=0;else p.assurer=Math.max(0,Math.min(4,+p.assurer||0));
     p.grimper=p.grimper===true||(+p.grimper||0)>0;
@@ -535,14 +564,14 @@ function render(){
   const lb=$("#lockBtn");if(lb){lb.title=lb.ariaLabel=prof?"Passer en mode élève (seules Séance, Roulette, Classement et Meilleurs grimpeurs restent ouvertes)":"Mode élève : touchez pour revenir en mode enseignant (code)";
     lb.querySelector(".shackle").setAttribute("d",prof?"M8 11V8a4 4 0 0 1 7.6-1.7":"M8 11V8a4 4 0 0 1 8 0v3")}
   const demoBar=S.demo&&prof?`<div class="notice"><span><b>Données d'exemple.</b> Importez vos classes et vos voies dans l'onglet Données.</span><button class="btn sm" data-act="cleardemo">Effacer l'exemple</button></div>`:"";
-  $("#main").innerHTML=demoBar+({seance:vSeance,roulette:vRoulette,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,blocs:vBlocs,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
+  $("#main").innerHTML=demoBar+({seance:vSeance,jeux:vJeux,roulette:vJeux,classement:vClassement,top:vTop,eleves:vEleves,voies:vVoies,blocs:vBlocs,plan:vPlan,donnees:vDonnees}[S.tab]||vSeance)();
 }
 
 function vSeance(){
   const c=classe();
   if(!c)return `<div class="empty">Aucune classe. Importez vos élèves dans l'onglet <b>Données</b>.</div>`;
   const cards=sortedEleves(c).map(e=>{const s=stats(e);return `<button class="card" data-act="passage" data-id="${e.id}">
-    <span class="nm">${esc(e.prenom)}<small>${esc(e.nom)}</small></span>${pmBadges(e)}
+    <span class="nm">${esc(e.prenom)}<small>${esc(e.nom)}</small></span>${(()=>{const t=teamOf(e.id);return t?`<span class="tchip" style="background:${t.c};color:${t.i}">Équipe ${esc(t.n)}</span>`:""})()}${pmBadges(e)}
     <span class="st"><span class="pts">${s.pts}<small> pts</small></span><span class="lvl" title="Meilleure voie enchaînée">${esc(s.maxC)}</span></span>${(()=>{const n=badgesOf(e).length;return n?`<span class="bcount" title="Badges obtenus">🏅 ${n}</span>`:""})()}</button>`}).join("");
   const recToday=c.eleves.flatMap(e=>progEvents(e).filter(x=>x.date.slice(0,10)===today()&&(x.t==="record"||x.t==="premiere"||x.t==="plusHaut")).map(x=>({e,x})));
   const strip=recToday.length?`<div class="recstrip"><b>🏆 Records du jour</b>${recToday.map(({e,x})=>`<span class="tag" style="background:var(--surface)">${esc(e.prenom)} : ${x.t==="premiere"?"1re voie "+esc(x.a):x.t==="plusHaut"?"plus haut, "+esc(x.a):esc(x.de)+" → "+esc(x.a)}</span>`).join("")}</div>`:"";
@@ -783,6 +812,92 @@ function drawBlocEdit(b){
 }
 function readBlocForm(){return {nom:$("#bNom").value.trim()||"Bloc",niveau:+$("#bNiv").value||1,couleur:$("#bCoul").value.trim(),pts:$("#bPts").value.trim(),defi:$("#bDefi").value.trim(),active:$("#bAct").getAttribute("aria-checked")==="true"}}
 async function compressSmall(file){const r=await compressImg(file,900,.66);return r.img}
+
+/* ---------- jeux & défis ---------- */
+const TEAMC=[{n:"Rouge",c:"#d7372b",i:"#fff"},{n:"Bleue",c:"#2a6fdb",i:"#fff"},{n:"Verte",c:"#2f9e4f",i:"#fff"},{n:"Jaune",c:"#f2c624",i:"#1b1b1b"},{n:"Violette",c:"#7b46c2",i:"#fff"},{n:"Orange",c:"#ef7d1a",i:"#1b1b1b"},{n:"Noire",c:"#1e1e1e",i:"#fff"},{n:"Rose",c:"#e65a9b",i:"#fff"}];
+const defiActif=cid=>(S.defis||[]).find(d=>d.classeId===cid&&!d.end);
+function teamOf(eid){const c=classe();const d=c&&defiActif(c.id);if(!d)return null;const t=d.equipes.find(t=>t.membres.includes(eid));return t?TEAMC[t.col]:null}
+let DF={critere:"points",mode:"homogene",nb:2,abs:new Set(),preview:null};
+function vJeux(){
+  const view=S.jeuxView||"menu";const c=classe();
+  if(view==="roulette")return `<div class="backbar"><button class="btn sm ghost" data-act="jview" data-v="menu">← Jeux &amp; défis</button></div>`+vRoulette();
+  if(view==="defi")return `<div class="backbar"><button class="btn sm ghost" data-act="jview" data-v="menu">← Jeux &amp; défis</button></div>`+vDefi();
+  const d=c&&defiActif(c.id);
+  return `<h2>Jeux &amp; défis${c?" · "+esc(c.nom):""}</h2><p class="sub">Choisissez une activité pour la séance.</p>
+  <div class="jmenu">
+    <button class="jcard" data-act="jview" data-v="roulette" style="background:linear-gradient(160deg,#ff8a50,#c63f22)"><b>Roulette</b><span>L'élève choisit son niveau, la roulette lui tire une voie au hasard sur le plan.</span><i aria-hidden="true">🎡</i></button>
+    <button class="jcard" data-act="jview" data-v="defi" style="background:linear-gradient(160deg,#3f7fe0,#1c3f8f)"><b>Défi équipes</b><span>Des équipes s'affrontent pendant la séance, aux points cumulés ou aux mètres grimpés.</span>${d?`<span class="live">● Défi en cours</span>`:""}<i aria-hidden="true">🏆</i></button>
+  </div>`;
+}
+function levelScore(e){const s=stats(e);return (s.maxI+1)*1000+Math.min(999,s.pts)}
+function makeTeams(ids,nb,mode,shuffle){
+  const scored=ids.map(id=>({id,s:levelScore(eleveById(id))+(shuffle?Math.random()*400:0)})).sort((a,b)=>b.s-a.s);
+  const snake=(list,teams)=>{list.forEach((x,i)=>{const r=Math.floor(i/teams.length),p=i%teams.length;teams[r%2?teams.length-1-p:p].membres.push(x.id)});return teams};
+  const mk=(k,poule)=>({id:uid(),col:k,poule,membres:[]});
+  if(mode==="homogene"){return snake(scored,Array.from({length:nb},(_,k)=>mk(k,0)))}
+  const np=Math.max(1,Math.floor(nb/2));const sizes=Array.from({length:np},(_,i)=>i===np-1?nb-2*(np-1):2);
+  const teams=[];let k=0,start=0;
+  sizes.forEach((sz,pi)=>{const share=Math.round(scored.length*sz/nb);const part=pi===np-1?scored.slice(start):scored.slice(start,start+share);start+=share;
+    teams.push(...snake(part,Array.from({length:sz},()=>mk(k++,pi))))});
+  return teams;
+}
+function teamScore(t,d){let tot=0;const det=t.membres.map(id=>{const e=eleveById(id);if(!e)return null;const st=stats(e,d.start,d.end||undefined);
+  const v=d.critere==="metres"?st.hauteur:st.pts;tot+=v;return {e,v}}).filter(Boolean);return {tot:Math.round(tot*10)/10,det:det.sort((a,b)=>b.v-a.v)}}
+function scoreboard(d){
+  const unit=d.critere==="metres"?"m":"pts";const poules=[...new Set(d.equipes.map(t=>t.poule))].sort();
+  const sizes=new Set(d.equipes.map(t=>t.membres.length));const avg=sizes.size>1;
+  return poules.map(pi=>{const ts=d.equipes.filter(t=>t.poule===pi).map(t=>{const sc=teamScore(t,d);return {t,sc,val:avg?sc.tot/Math.max(1,t.membres.length):sc.tot}}).sort((a,b)=>b.val-a.val);
+    const max=Math.max(1,...ts.map(x=>x.val));
+    return `<div class="poule">${poules.length>1?`<h3>Poule ${pi+1} · ${pi===0?"niveau le plus fort":pi===poules.length-1?"niveau le plus léger":"niveau intermédiaire"}</h3>`:""}<div class="score">${ts.map((x,i)=>{const C=TEAMC[x.t.col];
+      return `<div class="srow ${i===0&&x.val>0?"lead":""}"><span class="rk">${i===0&&x.val>0?"👑":i+1}</span><span class="tn"><span class="tchip" style="background:${C.c};color:${C.i};font-size:14px">${C.n}</span>${x.t.membres.length} élèves</span>
+        <span class="sv">${fr1(avg?Math.round(x.val*10)/10:x.sc.tot)}<small> ${unit}${avg?" /élève":""}</small></span>
+        <span class="bar"><i style="width:${Math.round(100*x.val/max)}%;background:${C.c}"></i></span>
+        <span class="who">${x.sc.det.map(m=>`<span><b>${esc(m.e.prenom)}</b> ${fr1(m.v)}</span>`).join("")}</span></div>`}).join("")}</div></div>`}).join("")
+    +(avg?`<p class="sub" style="margin-top:8px">Les équipes n'ont pas le même nombre d'élèves : le classement se fait à la moyenne par élève.</p>`:"");
+}
+function vDefi(){
+  const c=classe();if(!c)return `<div class="empty">Aucune classe.</div>`;
+  const d=defiActif(c.id);
+  const past=(S.defis||[]).filter(x=>x.classeId===c.id&&x.end).sort((a,b)=>b.start.localeCompare(a.start)).slice(0,5);
+  const hist=past.length?`<div class="lab" style="margin-top:22px">Défis précédents</div><div class="list">${past.map(x=>`<div class="li"><span class="grow">${new Date(x.start).toLocaleDateString("fr-FR")} · ${x.critere==="metres"?"mètres":"points"} · ${x.mode==="niveau"?"équipes de niveau":"équipes homogènes"}</span>${(x.gagnants||[]).map(g=>`<span class="tchip" style="background:${TEAMC[g].c};color:${TEAMC[g].i}">🏆 ${TEAMC[g].n}</span>`).join("")}<button class="btn sm ghost profonly" data-act="defivoir" data-id="${x.id}">Voir</button></div>`).join("")}</div>`:"";
+  if(d){
+    return `<div class="row" style="align-items:center"><h2 style="margin:0">Défi équipes · ${esc(c.nom)}</h2><span class="tag ok">● en cours</span></div>
+    <p class="sub">Depuis ${hhmm(d.start)} · ${d.critere==="metres"?"mètres grimpés":"points cumulés (voies, blocs et progrès)"} · ${d.mode==="niveau"?"équipes de niveau, par poule":"équipes homogènes"}. Les passages notés en séance comptent automatiquement.</p>
+    <div class="row" style="margin-bottom:6px"><button class="btn" data-act="tv">${document.body.classList.contains("tv")?"Quitter le grand écran":"Grand écran"}</button><button class="btn pri profonly" data-act="defiend" style="margin-left:auto">Terminer le défi</button><button class="btn ghost profonly" data-act="defidel">Annuler</button></div>
+    ${scoreboard(d)}${hist}`;
+  }
+  if(!isProf())return `<h2>Défi équipes</h2><div class="empty">Pas de défi en cours. Le professeur peut en lancer un.</div>${hist}`;
+  const pres=sortedEleves(c).filter(e=>!DF.abs.has(e.id));
+  const nbOpts=(DF.mode==="niveau"?[4,6,8]:[2,3,4,5,6]).filter(n=>n<=Math.max(2,pres.length));
+  if(!nbOpts.includes(DF.nb))DF.nb=nbOpts[0]||2;
+  const prev=DF.preview;
+  const teamsHTML=prev?(()=>{const poules=[...new Set(prev.map(t=>t.poule))].sort();return poules.map(pi=>`<div class="poule">${poules.length>1?`<h3>Poule ${pi+1}${pi===0?" · les plus forts":pi===poules.length-1?" · les plus légers":""}</h3>`:""}<div class="teams">${prev.filter(t=>t.poule===pi).map(t=>{const C=TEAMC[t.col];
+    return `<div class="team"><h4 style="background:${C.c};color:${C.i}">Équipe ${C.n}<small style="margin-left:auto;font-size:14px">${t.membres.length}</small></h4><div class="mbrs">${t.membres.map(id=>{const e=eleveById(id);const st=stats(e);return `<button data-act="dfmove" data-id="${id}" title="Changer d'équipe">${esc(e.prenom)} <small style="font-weight:400">${esc(st.maxC)}</small></button>`}).join("")}</div></div>`}).join("")}</div></div>`).join("")})():"";
+  return `<h2>Défi équipes · ${esc(c.nom)}</h2><p class="sub">Formez les équipes, lancez le défi : chaque voie ou bloc noté en séance rapporte à l'équipe de l'élève.</p>
+    <div class="lab">Élèves présents (${pres.length}/${c.eleves.length}) · touchez un absent pour le retirer</div>
+    <div class="chips">${sortedEleves(c).map(e=>`<button class="chip" data-act="dfabs" data-id="${e.id}" aria-pressed="${!DF.abs.has(e.id)}">${esc(e.prenom)} ${esc(e.nom.charAt(0))}.</button>`).join("")}</div>
+    <div class="lab">Type d'équipes</div><div class="seg"><button data-act="dfmode" data-v="homogene" aria-pressed="${DF.mode==="homogene"}">Homogènes (toutes s'affrontent)</button><button data-act="dfmode" data-v="niveau" aria-pressed="${DF.mode==="niveau"}">De niveau (poules)</button></div>
+    <p class="sub" style="margin:6px 0 0">${DF.mode==="homogene"?"Chaque équipe mélange forts et moins forts : forces équilibrées.":"Les élèves sont répartis par niveau en poules ; dans chaque poule, deux équipes de même niveau s'affrontent."}</p>
+    <div class="lab">Nombre d'équipes</div><div class="seg">${nbOpts.map(n=>`<button data-act="dfnb" data-v="${n}" aria-pressed="${DF.nb===n}">${n}</button>`).join("")}</div>
+    <div class="lab">Compétition sur</div><div class="seg"><button data-act="dfcrit" data-v="points" aria-pressed="${DF.critere==="points"}">Points cumulés</button><button data-act="dfcrit" data-v="metres" aria-pressed="${DF.critere==="metres"}">Mètres grimpés</button></div>
+    <div class="row" style="margin-top:14px"><button class="btn pri" data-act="dfmake">${prev?"Refaire les équipes":"Former les équipes"}</button>${prev?`<button class="btn" data-act="dfshuffle">Mélanger</button>`:""}</div>
+    ${prev?`<p class="sub" style="margin:10px 0 0">Touchez un élève pour le faire passer dans l'équipe suivante${DF.mode==="niveau"?" de sa poule":""}.</p>${teamsHTML}<div class="row" style="margin-top:14px"><button class="spinbtn" data-act="dfstart" style="max-width:360px"><span class="wheel" aria-hidden="true" style="display:grid;place-items:center;font-size:38px">🏁</span><span class="lbl">Lancer le défi<small>${DF.critere==="metres"?"aux mètres grimpés":"aux points cumulés"}</small></span></button></div>`:""}
+    ${hist}`;
+}
+function endDefi(d){
+  d.end=new Date().toISOString();const poules=[...new Set(d.equipes.map(t=>t.poule))];const avg=new Set(d.equipes.map(t=>t.membres.length)).size>1;
+  d.gagnants=poules.map(pi=>d.equipes.filter(t=>t.poule===pi).map(t=>{const sc=teamScore(t,d);return {t,v:avg?sc.tot/Math.max(1,t.membres.length):sc.tot}}).sort((a,b)=>b.v-a.v)[0]).filter(x=>x&&x.v>0).map(x=>x.t.col);
+  save();render();
+  if(!d.gagnants.length)return;
+  const el=document.createElement("div");el.className="celebrate";
+  el.innerHTML=`<canvas></canvas><div class="celcard"><div class="celt">${d.gagnants.length>1?"Vainqueurs !":"Victoire !"}</div>
+    <div class="celb" style="margin-top:14px">${d.gagnants.map(g=>`<span class="tchip" style="background:${TEAMC[g].c};color:${TEAMC[g].i};font-size:24px;padding:6px 16px">Équipe ${TEAMC[g].n}</span>`).join("")}</div>
+    <div class="sub" style="margin:12px 0 0">${d.critere==="metres"?"aux mètres grimpés":"aux points cumulés"} · touchez pour continuer</div></div>`;
+  document.body.appendChild(el);el.onclick=()=>el.remove();setTimeout(()=>el.remove(),8000);
+  if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)){const cv=el.querySelector("canvas");const cx=cv.getContext("2d");const W=cv.width=innerWidth,H=cv.height=innerHeight;
+    const cols=d.gagnants.map(g=>TEAMC[g].c).concat(["#f2c624","#ffffff"]);const P=Array.from({length:160},()=>({x:Math.random()*W,y:-20-Math.random()*H*.5,vx:(Math.random()-.5)*3,vy:Math.random()*3+2,r:Math.random()*6+3,c:cols[Math.random()*cols.length|0],a:Math.random()*6}));
+    let f=0;(function tick(){if(!el.isConnected||f>260)return;f++;cx.clearRect(0,0,W,H);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.a+=.1;cx.save();cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillStyle=p.c;cx.fillRect(-p.r,-p.r/2,p.r*2,p.r);cx.restore()});requestAnimationFrame(tick)})()}
+}
 
 /* ---------- roulette ---------- */
 const RL={niv:"",mode:"exact",eleveId:"",excl:true,cur:null,res:null,spin:false,planId:null};
@@ -1066,6 +1181,20 @@ document.addEventListener("click",ev=>{
   const c=classe();
   switch(a){
     case "close":closeModal();break;
+    case "jview":S.jeuxView=t.dataset.v;saveLocal();render();window.scrollTo(0,0);break;
+    case "dfabs":{if(DF.abs.has(id))DF.abs.delete(id);else DF.abs.add(id);DF.preview=null;render();break}
+    case "dfmode":DF.mode=t.dataset.v;DF.preview=null;render();break;
+    case "dfnb":DF.nb=+t.dataset.v;DF.preview=null;render();break;
+    case "dfcrit":DF.critere=t.dataset.v;render();break;
+    case "dfmake":case "dfshuffle":{const ids=sortedEleves(c).filter(e=>!DF.abs.has(e.id)).map(e=>e.id);if(ids.length<2)return toast("Il faut au moins 2 élèves présents");
+      DF.preview=makeTeams(ids,DF.nb,DF.mode,a==="dfshuffle");render();break}
+    case "dfmove":{const T=DF.preview;const from=T.find(t=>t.membres.includes(id));const same=T.filter(t=>t.poule===from.poule);const to=same[(same.indexOf(from)+1)%same.length];
+      if(to===from)return;from.membres=from.membres.filter(x=>x!==id);to.membres.push(id);render();break}
+    case "dfstart":{if(defiActif(c.id))return toast("Un défi est déjà en cours");const d={id:uid(),classeId:c.id,start:new Date().toISOString(),end:null,critere:DF.critere,mode:DF.mode,equipes:DF.preview.map(t=>({id:t.id,col:t.col,poule:t.poule,membres:t.membres.slice()}))};
+      S.defis.push(d);DF.preview=null;save();render();window.scrollTo(0,0);toast("C'est parti ! Le défi est lancé");break}
+    case "defiend":{const d=defiActif(c.id);if(d)ask("Terminer le défi et annoncer les vainqueurs ?",()=>endDefi(d));break}
+    case "defidel":{const d=defiActif(c.id);if(d)ask("Annuler ce défi ? Les passages des élèves sont conservés, seul le défi est supprimé.",()=>{S.defis=S.defis.filter(x=>x.id!==d.id);save();render()});break}
+    case "defivoir":{const d=S.defis.find(x=>x.id===id);if(!d)return;$("#modal").innerHTML=`<div class="overlay" data-act="closebg"><div class="sheet" role="dialog" aria-label="Résultats du défi"><div class="row"><h3>Défi du ${new Date(d.start).toLocaleDateString("fr-FR")}</h3><button class="btn ghost" data-act="close" style="margin-left:auto">Fermer</button></div><p class="sub">${hhmm(d.start)} – ${hhmm(d.end)} · ${d.critere==="metres"?"mètres grimpés":"points cumulés"}</p>${scoreboard(d)}</div></div>`;break}
     case "export":openExport();break;
     case "exmode":EX.mode=t.dataset.v;openExport();break;
     case "exday":EX.day=t.dataset.v;openExport();break;
@@ -1428,11 +1557,11 @@ function dropDemo(){if(S.demo){S.classes=[];S.voies=[];S.passages=[];S.plans=[];
 
 /* ---------- synchronisation des tablettes + code d'accès ---------- */
 const ONLINE=(()=>{try{return window.top===window&&(location.protocol==="https:"||location.hostname==="localhost")}catch(e){return false}})();
-const LOCAL_KEYS=["tab","classeId","planId","planMode","planLabel","sortKey","topPer","topNiv","voieView","vmode"];
+const LOCAL_KEYS=["tab","classeId","planId","planMode","planLabel","sortKey","topPer","topNiv","voieView","vmode","jeuxView"];
 const SK=KEY+"-sync";
 let SY={code:null,etag:null,base:null,cfg:null,unlocked:false,busy:false,timer:null,state:"off",msg:""};
 try{Object.assign(SY,JSON.parse(localStorage.getItem(SK)||"{}"))}catch(e){}
-const ELEVE_TABS=["seance","roulette","classement","top"];
+const ELEVE_TABS=["seance","jeux","classement","top"];
 const isProf=()=>SY.prof!==false;
 function askProf(cb){showLock("",{prof:true,cb})}
 function persistSY(){const o={code:SY.code,codeLen:SY.codeLen,cfg:SY.cfg,unlocked:SY.unlocked,prof:SY.prof};try{localStorage.setItem(SK,JSON.stringify(Object.assign({etag:SY.etag,base:SY.base},o)))}
